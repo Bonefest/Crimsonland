@@ -26,7 +26,7 @@ WorldData parseCommands(int argc, char** commands) {
     *value1 = atoi(argument);
     const char* argument2 = strchr(argument, 'x');
     if(argument2 != nullptr) {
-      *value2 = atoi(argument2);
+      *value2 = atoi(argument2 + 1);
     }
   };
 
@@ -59,11 +59,12 @@ WorldData parseCommands(int argc, char** commands) {
 
       int width, height;
       parseSizeArgument(windowData, &width, &height);
-      if(width < result.windowWidth || height < result.windowHeight) {
-        info("%s window size is too small! Window size set to 640x480.\n", warning_header);
+      if(width < MIN_SCREENW || height < MIN_SCREENH) {
+        info("%s window size is too small! Window size set to %dx%d.\n",
+             warning_header, MIN_SCREENW, MIN_SCREENH);
 
-        width = 640;
-        height = 480;
+        width = MIN_SCREENW;
+        height = MIN_SCREENH;
       }
 
       result.windowWidth = width;
@@ -145,63 +146,62 @@ bool CrimsonlandFramework::Init() {
 
   }
 
-  if(!m_program.generateProgram("shaders/posteffect.vert",
-                                "shaders/posteffect.frag")) {
-    info("%s\n", m_program.getErrorMessage().c_str());
+  if(!m_bumpProgram.generateProgram("shaders/posteffect.vert",
+                                    "shaders/bumpeffect.frag")) {
+    info("%s\n", m_bumpProgram.getErrorMessage().c_str());
     return false;
   }
 
+  // if(!m_noiseProgram.generateProgram("shaders/posteffect.vert",
+  //                                    "shaders/noiseeffect.frag")) {
+  //   info("%s\n", m_noiseProgram.getErrorMessage().c_str());
+  //   return false;
+  // }
+
   m_testSprite = createSprite("data/circle.tga");
-  if(!initScreenTexture(m_worldData.windowWidth, m_worldData.windowHeight)) {
+  if(!m_screenTexture.init(renderer, SDL_TEXTUREACCESS_TARGET,
+                           m_worldData.windowWidth, m_worldData.windowHeight)) {
     return false;
   }
+
+  if(!m_noiseTexture.init(renderer, SDL_TEXTUREACCESS_STREAMING,
+                          m_worldData.windowWidth, m_worldData.windowHeight)) {
+    return false;
+  }
+
 
   return true;
 }
 
-bool CrimsonlandFramework::initScreenTexture(int screenW, int screenH) {
-
-  m_screenTexture = SDL_CreateTexture(renderer,
-                                      SDL_PIXELFORMAT_RGBA8888,
-                                      SDL_TEXTUREACCESS_TARGET,
-                                      screenW,
-                                      screenH);
-
-
-  SDL_SetTextureBlendMode(m_screenTexture, SDL_BLENDMODE_BLEND);
-
-  return (m_screenTexture != nullptr);
-}
-
-
-
-
 bool CrimsonlandFramework::Tick() {
 
-  activateTextureRendering();
+  float time = float(SDL_GetTicks()) / 1000.0f;
+
+  m_screenTexture.setAsRenderingTarget(renderer);
 
   drawTestBackground();
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
   for(int x = 0; x < m_worldData.windowWidth; x += 20) {
-    SDL_RenderDrawLine(renderer, x, 0, x, m_worldData.windowHeight);
+    //    SDL_RenderDrawLine(renderer, x, 0, x, m_worldData.windowHeight);
   }
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 
-  drawSprite(m_testSprite, 320, 240);
+  drawSprite(m_testSprite, 200, 240);
+  drawSprite(m_testSprite, 320, 150);
+  drawSprite(m_testSprite, 320, 300);
+  drawSprite(m_testSprite, 440, 240);
 
-
+  drawSprite(m_testSprite, 320 + std::sin(time) * 240, 240);
 
   deactivateTextureRendering();
 
   SDL_RenderClear(renderer);
 
-  SDL_GL_BindTexture(m_screenTexture, NULL, NULL);
-  glUseProgram(m_program.getProgramID());
+  m_screenTexture.bind();
+  glUseProgram(m_bumpProgram.getProgramID());
 
-
-  float time = float(SDL_GetTicks()) / 1000.0f;
-  glUniform1f(glGetUniformLocation(m_program.getProgramID(), "time"), time);
-  glUniform2f(glGetUniformLocation(m_program.getProgramID(), "screenSize"),
+  glUniform1f(glGetUniformLocation(m_bumpProgram.getProgramID(), "time"), time);
+  glUniform2f(glGetUniformLocation(m_bumpProgram.getProgramID(), "screenSize"),
               m_worldData.windowWidth, m_worldData.windowHeight);
 
   glBegin(GL_TRIANGLE_STRIP);
@@ -223,23 +223,10 @@ bool CrimsonlandFramework::Tick() {
   return false;
 }
 
-void CrimsonlandFramework::activateTextureRendering() {
-
-  SDL_SetRenderTarget(renderer, m_screenTexture);
-  SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
-  SDL_RenderClear(renderer);
-
-}
-
 void CrimsonlandFramework::deactivateTextureRendering() {
   SDL_SetRenderTarget(renderer, NULL);
 }
 
-void CrimsonlandFramework::drawTextureToScreen() {
-  SDL_RenderCopyEx(renderer, m_screenTexture, NULL, NULL, rand() % 360, NULL, SDL_FLIP_NONE);
-}
-
 void CrimsonlandFramework::Close() {
-  SDL_DestroyTexture(m_screenTexture);
   destroySprite(m_testSprite);
 }
