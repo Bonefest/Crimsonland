@@ -151,17 +151,22 @@ FRAMEWORK_API int run(Framework* framework)
 
 	bool fullscreen;
 	GFramework->PreInit(g_width, g_height, fullscreen);
-	
+
     flags = SDL_WINDOW_HIDDEN;
 	if (fullscreen) {
 		SDL_ShowCursor(0);
         //flags |= SDL_WINDOW_FULLSCREEN;
     }
 
-    if (SDL_Init(SDL_INIT_VIDEO) == -1) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_VIDEO_OPENGL) == -1) {
         fprintf(stderr, "SDL_Init(SDL_INIT_VIDEO) failed: %s\n", SDL_GetError());
         return(2);
     }
+
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 1);
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
 
 	bool bModeFound = false;
 	int num_displays = SDL_GetNumVideoDisplays();
@@ -186,12 +191,18 @@ FRAMEWORK_API int run(Framework* framework)
 		return 1;
 	}
 
-    if (SDL_CreateWindowAndRenderer(0, 0, flags, &window, &g_renderer) < 0) {
+    if (SDL_CreateWindowAndRenderer(0, 0, flags | SDL_WINDOW_OPENGL, &window, &g_renderer) < 0) {
         fprintf(stderr, "SDL_CreateWindowAndRenderer() failed: %s\n", SDL_GetError());
         return(2);
+    } else {
+        GFramework->renderer = g_renderer;
     }
 
+    SDL_GLContext glContext = SDL_GL_CreateContext(window);
+
+
 	{
+
         /* Show the window */
         SDL_SetWindowTitle(window, "crimsonland");
         SDL_SetWindowSize(window, g_width, g_height);
@@ -305,6 +316,7 @@ FRAMEWORK_API int run(Framework* framework)
 
 	GFramework->Close();
 
+    SDL_GL_DeleteContext(glContext);
     SDL_DestroyRenderer(g_renderer);
     SDL_DestroyWindow(window);
 

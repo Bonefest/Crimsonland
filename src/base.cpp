@@ -1,6 +1,10 @@
 #include "base.h"
 #include <cstring>
 
+
+#include "glad/glad.h"
+#include <GL/gl.h>
+
 const static char* line = "-------------------------\n";
 const static char* error_header = "[error]";
 const static char* warning_header = "[warning]";
@@ -126,4 +130,116 @@ CrimsonlandFramework::CrimsonlandFramework(int argc, char** commands) {
   info("Maximal ammo number %d\n", m_worldData.numAmmo);
   info(line);
 
+}
+
+void CrimsonlandFramework::PreInit(int& width, int& height, bool& fullscreen) {
+  width = m_worldData.windowWidth;
+  height = m_worldData.windowHeight;
+  fullscreen = false;
+}
+
+bool CrimsonlandFramework::Init() {
+
+  if(!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
+    return false;
+
+  }
+
+  if(!m_program.generateProgram("shaders/posteffect.vert",
+                                "shaders/posteffect.frag")) {
+    info("%s\n", m_program.getErrorMessage().c_str());
+    return false;
+  }
+
+  m_testSprite = createSprite("data/circle.tga");
+  if(!initScreenTexture(m_worldData.windowWidth, m_worldData.windowHeight)) {
+    return false;
+  }
+
+  return true;
+}
+
+bool CrimsonlandFramework::initScreenTexture(int screenW, int screenH) {
+
+  m_screenTexture = SDL_CreateTexture(renderer,
+                                      SDL_PIXELFORMAT_RGBA8888,
+                                      SDL_TEXTUREACCESS_TARGET,
+                                      screenW,
+                                      screenH);
+
+
+  SDL_SetTextureBlendMode(m_screenTexture, SDL_BLENDMODE_BLEND);
+
+  return (m_screenTexture != nullptr);
+}
+
+
+
+
+bool CrimsonlandFramework::Tick() {
+
+  activateTextureRendering();
+
+  drawTestBackground();
+  SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+  for(int x = 0; x < m_worldData.windowWidth; x += 20) {
+    SDL_RenderDrawLine(renderer, x, 0, x, m_worldData.windowHeight);
+  }
+  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+
+  drawSprite(m_testSprite, 320, 240);
+
+
+
+  deactivateTextureRendering();
+
+  SDL_RenderClear(renderer);
+
+  SDL_GL_BindTexture(m_screenTexture, NULL, NULL);
+  glUseProgram(m_program.getProgramID());
+
+
+  float time = float(SDL_GetTicks()) / 1000.0f;
+  glUniform1f(glGetUniformLocation(m_program.getProgramID(), "time"), time);
+  glUniform2f(glGetUniformLocation(m_program.getProgramID(), "screenSize"),
+              m_worldData.windowWidth, m_worldData.windowHeight);
+
+  glBegin(GL_TRIANGLE_STRIP);
+  glTexCoord2f(0.0f, 0.0f);
+  glVertex2f(0.0f, 0.0f);
+
+  glTexCoord2f( 1.0f, 0.0f);
+  glVertex2f(m_worldData.windowWidth, 0.0f);
+
+  glTexCoord2f(0.0f, 1.0f);
+  glVertex2f(0.0f, m_worldData.windowHeight);
+
+  glTexCoord2f( 1.0f, 1.0f);
+  glVertex2f(m_worldData.windowWidth, m_worldData.windowHeight);
+
+  glEnd();
+  //  drawTextureToScreen();
+
+  return false;
+}
+
+void CrimsonlandFramework::activateTextureRendering() {
+
+  SDL_SetRenderTarget(renderer, m_screenTexture);
+  SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
+  SDL_RenderClear(renderer);
+
+}
+
+void CrimsonlandFramework::deactivateTextureRendering() {
+  SDL_SetRenderTarget(renderer, NULL);
+}
+
+void CrimsonlandFramework::drawTextureToScreen() {
+  SDL_RenderCopyEx(renderer, m_screenTexture, NULL, NULL, rand() % 360, NULL, SDL_FLIP_NONE);
+}
+
+void CrimsonlandFramework::Close() {
+  SDL_DestroyTexture(m_screenTexture);
+  destroySprite(m_testSprite);
 }

@@ -9,7 +9,7 @@
         #define FRAMEWORK_API __declspec(dllimport)
     #endif
 #else
-    #define FRAMEWORK_API 
+    #define FRAMEWORK_API
 #endif
 
 
@@ -60,7 +60,7 @@ public:
 	// return value: if true will exit the application
 	virtual bool Tick() = 0;
 
-	// param: xrel, yrel: The relative motion in the X/Y direction 
+	// param: xrel, yrel: The relative motion in the X/Y direction
 	// param: x, y : coordinate, relative to window
 	virtual void onMouseMove(int x, int y, int xrelative, int yrelative) = 0;
 
@@ -71,6 +71,8 @@ public:
 	virtual void onKeyReleased(FRKey k) = 0;
 
 	virtual ~Framework() {};
+
+    SDL_Renderer* renderer;
 };
 
 

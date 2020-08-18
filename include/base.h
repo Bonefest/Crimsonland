@@ -1,10 +1,12 @@
 #ifndef BASE_H_INCLUDED
 #define BASE_H_INCLUDED
 
+#include "SDL2/SDL.h"
 #include "Framework.h"
+#include "Program.h"
+
 #include <stdlib.h>
 #include <math.h>
-
 #include <stdint.h>
 #include <cstdio>
 
@@ -45,23 +47,19 @@ inline int clamp(int value, int min, int max) {
 
 WorldData parseCommands(int argc, char** commands);
 
-/* Test Framework realization */
 class CrimsonlandFramework : public Framework {
 
 public:
 
   CrimsonlandFramework(int argc, char** commands);
 
-  virtual void PreInit(int& width, int& height, bool& fullscreen) {
-    width = 640;
-    height = 480;
-  }
+  virtual void PreInit(int& width, int& height, bool& fullscreen);
 
-  virtual bool Init() { return true;}
+  virtual bool Init();
 
-  virtual void Close() { }
+  virtual void Close();
 
-  virtual bool Tick() { }
+  virtual bool Tick();
 
   virtual void onMouseMove(int x, int y, int xrelative, int yrelative) { }
 
@@ -73,8 +71,18 @@ public:
 
 private:
 
+  bool initScreenTexture(int screenW, int screenH);
+  void activateTextureRendering();
+  void deactivateTextureRendering();
+  void drawTextureToScreen();
+
   WorldData m_worldData;
 
+  // TODO(mizofix): move texture to abstract layer
+  SDL_Texture* m_screenTexture;
+  Sprite* m_testSprite;
+
+  Program m_program;
 };
 
 #endif
