@@ -4,8 +4,8 @@
 #include "SDL2/SDL.h"
 #include "Framework.h"
 #include "Program.h"
+#include "Common.h"
 #include "Assert.h"
-#include "Texture.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -41,22 +41,19 @@ private:
   void deactivateTextureRendering();
   void drawTextureToScreen();
 
-  void generateNoise();
-
   WorldData m_worldData;
 
-  Texture m_screenTexture;
-  Texture m_noiseTexture;
+  Texture* m_screenTexture;
   Sprite* m_testSprite;
 
   float m_spritePosX;
   float m_spritePosY;
 
   Program m_bumpProgram;
-  Program m_noiseProgram;
 
   float m_lastTime;
   float m_deltaTime;
 };
+
 
 #endif

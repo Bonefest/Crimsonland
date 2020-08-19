@@ -13,23 +13,37 @@
 #endif
 
 
+#include <string>
+
 // Bonus for any found bugs in the framework!
 
 class Sprite;
 
 FRAMEWORK_API void setCameraPosition(int x, int y);
 
-FRAMEWORK_API Sprite* createSprite(const char* path);
+FRAMEWORK_API Sprite* createSprite(const std::string& path);
 FRAMEWORK_API void drawSprite(Sprite*, int x, int y, bool relativeToCamera = true);
+
+// NOTE(mizofix): Anchor point coords should be in range [0, 1]
+// (0, 0) corresponds to top-left corner
+FRAMEWORK_API void setSpriteAnchorPoint(Sprite* sprite, float x, float y);
+
 FRAMEWORK_API void getSpriteSize(Sprite* s, int& w, int &h);
 FRAMEWORK_API void destroySprite(Sprite* s);
 
+FRAMEWORK_API void setAnimation(Sprite* s, const std::string& animationName, bool repeat = true);
+FRAMEWORK_API void updateAnimation(Sprite* s, float deltaTime);
+FRAMEWORK_API void stopFrozenAnimation(Sprite* s, bool frozen);
+FRAMEWORK_API void resetAnimation(Sprite* s);
+
+FRAMEWORK_API bool loadAnimations(const std::string& path);
 
 class Texture;
 
 FRAMEWORK_API Texture* createTexture(int width, int height);
 FRAMEWORK_API void drawTexture(Texture* texture, int x, int y, bool relativeToCamera = true);
 FRAMEWORK_API void getTextureSize(Texture* texture, int& w, int& h);
+FRAMEWORK_API void setTextureAnchorPoint(float x, float y);
 FRAMEWORK_API void setTextureAsTarget(Texture* texture);
 FRAMEWORK_API void bindTexture(Texture* texture);
 FRAMEWORK_API void unbindTexture(Texture* texture);

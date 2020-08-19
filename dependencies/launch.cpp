@@ -6,6 +6,7 @@
 #include "SDL2/SDL_image.h"
 
 #include "inc/Framework.h"
+#include "Assert.h"
 
 SDL_Renderer *g_renderer;
 int g_width = 800;
@@ -33,54 +34,122 @@ FRAMEWORK_API void setCameraPosition(int x, int y) {
 
 }
 
+#include "animation.cpp"
+
+
+// NOTE(mizofix): Well.. unordered_map is not the best choice
+#include <unordered_map>
+std::unordered_map<std::string, SDL_Texture*> loadedTextures;
+std::unordered_map<std::string, Animation> loadedAnimations;
+
+static void freeTextures() {
+  for(auto textIt: loadedTextures) {
+    if(textIt.second != nullptr) {
+      SDL_DestroyTexture(textIt.second);
+    }
+  }
+}
+
+#include "json.hpp"
+#include <fstream>
+
+static SDL_Texture* loadTexture(const std::string& path) {
+  auto textIt = loadedTextures.find(path);
+  if(textIt != loadedTextures.end()) {
+    return textIt->second;
+  }
+
+  SDL_Texture* result = IMG_LoadTexture(g_renderer, path.c_str());
+  if(result != nullptr) {
+    loadedTextures[path] = result;
+  }
+
+  return result;
+}
+
+// NOTE(mizofix): to simplify parsing code, we omit checking the parsed data
+static bool parseAnimation(nlohmann::json& parser, Animation& animation) {
+
+  SDL_Texture* texture = loadTexture(parser["texture"].get<std::string>());
+  if(texture == nullptr) {
+    return false;
+  }
+
+  int startX = parser["start_frame"]["x"], endX = parser["end_frame"]["x"];
+  int startY = parser["start_frame"]["y"], endY = parser["end_frame"]["y"];
+
+  int width = parser["size"]["w"], height = parser["size"]["h"];
+
+  float duration = parser["duration"];
+  bool repeat = parser["repeat"];
+
+  Animation result(startX, startY, endX, endY, width, height, duration);
+  result.texture = texture;
+  result.repeat = repeat;
+
+  animation = result;
+  return true;
+}
+
+FRAMEWORK_API bool loadAnimations(const std::string& name) {
+  std::ifstream file(name);
+  if(file.is_open()) {
+    nlohmann::json parser;
+    file >> parser;
+
+    nlohmann::json animations = parser["animations"];
+
+    for(auto animIt = animations.begin(); animIt != animations.end(); animIt++) {
+      Animation newAnimation;
+      if(parseAnimation(animIt.value(), newAnimation)) {
+        loadedAnimations[animIt.key()] = newAnimation;
+      } else {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+
+static bool animationIsLoaded(const std::string& name) {
+  return loadedAnimations.find(name) != loadedAnimations.end();
+}
+
+
 
 /*
  * structure declarations
  */
 
+
 class Sprite {
 public:
 	Sprite():w(0), h(0),
-             anchorX(0.5f), anchorY(0.5f),
-             tex(nullptr) {}
+             anchorX(0.5f), anchorY(0.5f) { }
 
 	int w, h;
     float anchorX, anchorY;
-	SDL_Texture* tex;
+    Animation animation;
 };
 
-FRAMEWORK_API Sprite* createSprite(const char* path)
+FRAMEWORK_API Sprite* createSprite(const std::string& animationName)
 {
-	SDL_Texture* texture = IMG_LoadTexture(g_renderer, path);
-	if (!texture) {
-		fprintf(stderr, "Couldn't load %s: %s\n", path, SDL_GetError());
-		return nullptr;
-	}
+  if(!animationIsLoaded(animationName)) {
+    return nullptr;
+  }
+  Sprite* s = new Sprite();
+  s->animation = loadedAnimations[animationName];
 
-
-	Sprite* s = new Sprite();
-	if (!s)
-	{
-		fprintf(stderr, "Not enough memory\n");
-		SDL_Quit();
-		exit(1);
-	}
-
-	SDL_QueryTexture(texture, NULL, NULL, &s->w, &s->h);
-
-	s->tex = texture;
-
-	return s;
+  return s;
 }
 
 FRAMEWORK_API void destroySprite(Sprite* s)
 {
 	SDL_assert(s);
-
-	if (s->tex)
-	{
-		SDL_DestroyTexture(s->tex);
-	}
 
 	delete s;
 }
@@ -97,26 +166,56 @@ FRAMEWORK_API void drawSprite(Sprite* sprite, int x, int y, bool relativeToCamer
 	SDL_assert(g_renderer);
 	SDL_assert(sprite);
 
-	SDL_Rect r;
-	r.w = sprite->w;
-	r.h = sprite->h;
+	SDL_Rect dst;
     if(relativeToCamera) {
-      r.x = x - g_camera.topLeftX;
-      r.y = y - g_camera.topLeftY;
+      dst.x = x - g_camera.topLeftX;
+      dst.y = y - g_camera.topLeftY;
     } else {
-      r.x = x;
-      r.y = y;
+      dst.x = x;
+      dst.y = y;
     }
 
-    r.x -= int(sprite->anchorX * float(sprite->w));
-    r.y -= int(sprite->anchorY * float(sprite->h));
+    dst.x -= int(sprite->anchorX * float(sprite->w));
+    dst.y -= int(sprite->anchorY * float(sprite->h));
 
-    if(r.x < sprite->w || r.y < sprite->h || r.x > g_width + sprite->w || r.y > g_height + sprite->h) {
+    if(dst.x < sprite->w || dst.y < sprite->h ||
+       dst.x > g_width + sprite->w || dst.y > g_height + sprite->h) {
       return;
     }
 
-	SDL_RenderCopy(g_renderer, sprite->tex, NULL, &r);
+    SDL_Rect src = sprite->animation.getSourceRect();
+    dst.w = src.w;
+    dst.h = src.h;
+
+	SDL_RenderCopy(g_renderer, sprite->animation.texture, NULL, &dst);
 }
+
+FRAMEWORK_API void setSpriteAnchorPoint(Sprite* sprite, float x, float y) {
+  Assert(x >= 0.0f && y >= 0.0f && x <= 1.0f && y <= 1.0f);
+
+  sprite->anchorX = x;
+  sprite->anchorY = y;
+}
+
+FRAMEWORK_API void setAnimation(Sprite* sprite, const std::string& name, bool repeat) {
+  if(animationIsLoaded(name)) {
+    sprite->animation = loadedAnimations[name];
+    sprite->animation.repeat = repeat;
+  }
+}
+
+FRAMEWORK_API void updateAnimation(Sprite* sprite, float deltaTime) {
+  sprite->animation.update(deltaTime);
+}
+
+FRAMEWORK_API void setFrozenAnimation(Sprite* sprite, bool frozen) {
+  sprite->animation.frozen = frozen;
+}
+
+FRAMEWORK_API void resetAnimation(Sprite* sprite) {
+  sprite->animation.reset();
+}
+
 
 FRAMEWORK_API void getScreenSize(int& w, int &h)
 {
@@ -194,7 +293,7 @@ FRAMEWORK_API int run(Framework* framework)
     g_camera.viewportW = g_width;
     g_camera.viewportH = g_height;
 
-    flags = SDL_WINDOW_HIDDEN;
+    flags = SDL_WINDOW_HIDDEN | SDL_RENDERER_TARGETTEXTURE;
 	if (fullscreen) {
 		SDL_ShowCursor(0);
         //flags |= SDL_WINDOW_FULLSCREEN;
@@ -218,7 +317,7 @@ FRAMEWORK_API int run(Framework* framework)
 		for(int modeIndex = 0; modeIndex < num_modes; ++modeIndex)
 		{
 			SDL_DisplayMode mode;
-			int index = SDL_GetDisplayMode(displayIndex, modeIndex, &mode);
+            int index = SDL_GetDisplayMode(displayIndex, modeIndex, &mode);
 			if(mode.w == g_width && mode.h == g_height)
 			{
 				bModeFound = true;
@@ -229,16 +328,24 @@ FRAMEWORK_API int run(Framework* framework)
 
 	if(!bModeFound)
 	{
-        fprintf(stderr, "Desired window size: %d x %d is not suported\n", g_width, g_height);
+      fprintf(stderr, "Desired window size: %d x %d is not suported\n", g_width, g_height);
 		return 1;
 	}
 
-    if (SDL_CreateWindowAndRenderer(0, 0, flags | SDL_WINDOW_OPENGL, &window, &g_renderer) < 0) {
-        fprintf(stderr, "SDL_CreateWindowAndRenderer() failed: %s\n", SDL_GetError());
-        return(2);
-    } else {
-        GFramework->renderer = g_renderer;
-    }
+
+    // if (SDL_CreateWindowAndRenderer(0, 0, flags | SDL_WINDOW_OPENGL, &window, &g_renderer) < 0) {
+    //     fprintf(stderr, "SDL_CreateWindowAndRenderer() failed: %s\n", SDL_GetError());
+    //     return(2);
+    // } else {
+    //     GFramework->renderer = g_renderer;
+    // }
+
+    window = SDL_CreateWindow("Rendering to a texture!", SDL_WINDOWPOS_CENTERED,
+                                       SDL_WINDOWPOS_CENTERED, g_width, g_height, 0);
+	g_renderer = SDL_CreateRenderer(window, -1,
+                                  SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
+
+    GFramework->renderer = g_renderer;
 
     SDL_GLContext glContext = SDL_GL_CreateContext(window);
 
@@ -349,7 +456,7 @@ FRAMEWORK_API int run(Framework* framework)
 			SDL_RenderClear(g_renderer);
 
 			done |= GFramework->Tick() ? 1 : 0;
-
+            
             SDL_RenderPresent(g_renderer);
 
             SDL_Delay(1);
@@ -357,6 +464,7 @@ FRAMEWORK_API int run(Framework* framework)
     }
 
 	GFramework->Close();
+    freeTextures();
 
     SDL_GL_DeleteContext(glContext);
     SDL_DestroyRenderer(g_renderer);
@@ -365,4 +473,106 @@ FRAMEWORK_API int run(Framework* framework)
     /* We're done! */
     SDL_Quit();
     return(0);
+}
+
+
+struct Texture {
+
+  Texture(): texture(nullptr),
+             anchorX(0.5f),
+             anchorY(0.5f) { }
+
+  SDL_Texture* texture;
+  float        anchorX;
+  float        anchorY;
+
+};
+
+Texture* createTexture(int width, int height) {
+  Assert(width >= 0 && height >= 0);
+  Texture* text = new Texture();
+  if(text != nullptr) {
+    // TODO(mizofix): make this function call robust
+    text->texture = SDL_CreateTexture(g_renderer,
+                                      SDL_PIXELFORMAT_RGBA8888,
+                                      SDL_TEXTUREACCESS_TARGET,
+                                      width,
+                                      height);
+
+    if(text->texture == nullptr) {
+      delete text;
+      text = nullptr;
+    } else {
+
+      SDL_SetTextureBlendMode(text->texture, SDL_BLENDMODE_BLEND);
+
+    }
+  }
+
+  return text;
+}
+
+
+void drawTexture(Texture* texture, int x, int y, bool relativeToCamera) {
+
+  int tw, th;
+  getTextureSize(texture, tw, th);
+
+  SDL_Rect dst;
+  dst.w = tw;
+  dst.h = th;
+  dst.x = x;
+  dst.y = y;
+
+  if(relativeToCamera) {
+    dst.x = x - g_camera.topLeftX;
+    dst.y = y - g_camera.topLeftY;
+  }
+
+  dst.x -= int(float(tw) * texture->anchorX);
+  dst.y -= int(float(th) * texture->anchorY);
+
+  SDL_RenderCopy(g_renderer, texture->texture, NULL, &dst);
+
+}
+
+void getTextureSize(Texture* texture, int& w, int& h) {
+
+  Uint32 format;
+  int tw, th, access;
+  SDL_QueryTexture(texture->texture, &format, &access, &tw, &th);
+
+  w = th;
+  h = th;
+
+}
+
+void setTextureAnchorPoint(Texture* texture, float anchorX, float anchorY) {
+  texture->anchorX = anchorX;
+  texture->anchorY = anchorY;
+}
+
+void setTextureAsTarget(Texture* texture) {
+  SDL_SetRenderTarget(g_renderer, texture->texture);
+  SDL_SetRenderDrawColor(g_renderer, 255, 255, 255, 0);
+  SDL_RenderClear(g_renderer);
+}
+
+void bindTexture(Texture* texture) {
+  SDL_GL_BindTexture(texture->texture, NULL, NULL);
+}
+
+void unbindTexture(Texture* texture) {
+  SDL_GL_UnbindTexture(texture->texture);
+}
+
+void destroyTexture(Texture* texture) {
+  if(texture) {
+    if(texture->texture) {
+      SDL_DestroyTexture(texture->texture);
+      texture->texture = nullptr;
+    }
+
+    delete texture;
+  }
 }
