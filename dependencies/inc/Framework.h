@@ -17,10 +17,23 @@
 
 class Sprite;
 
+FRAMEWORK_API void setCameraPosition(int x, int y);
+
 FRAMEWORK_API Sprite* createSprite(const char* path);
-FRAMEWORK_API void drawSprite(Sprite*, int x, int y);
+FRAMEWORK_API void drawSprite(Sprite*, int x, int y, bool relativeToCamera = true);
 FRAMEWORK_API void getSpriteSize(Sprite* s, int& w, int &h);
 FRAMEWORK_API void destroySprite(Sprite* s);
+
+
+class Texture;
+
+FRAMEWORK_API Texture* createTexture(int width, int height);
+FRAMEWORK_API void drawTexture(Texture* texture, int x, int y, bool relativeToCamera = true);
+FRAMEWORK_API void getTextureSize(Texture* texture, int& w, int& h);
+FRAMEWORK_API void setTextureAsTarget(Texture* texture);
+FRAMEWORK_API void bindTexture(Texture* texture);
+FRAMEWORK_API void unbindTexture(Texture* texture);
+FRAMEWORK_API void destroyTexture(Texture* texture);
 
 FRAMEWORK_API void drawTestBackground();
 
@@ -38,6 +51,8 @@ enum class FRKey {
 	UP,
 	COUNT
 };
+
+FRAMEWORK_API bool isKeyPressed(FRKey key);
 
 enum class FRMouseButton {
 	LEFT,

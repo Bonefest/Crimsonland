@@ -7,10 +7,32 @@
 
 #include "inc/Framework.h"
 
-
 SDL_Renderer *g_renderer;
 int g_width = 800;
 int g_height = 600;
+
+struct {
+
+  int centerPosX;
+  int centerPosY;
+
+  int topLeftX;
+  int topLeftY;
+
+  int viewportW;
+  int viewportH;
+
+} g_camera;
+
+FRAMEWORK_API void setCameraPosition(int x, int y) {
+  g_camera.centerPosX = x;
+  g_camera.centerPosY = y;
+
+  g_camera.topLeftX = x - int(float(g_camera.viewportW) * 0.5f);
+  g_camera.topLeftY = y - int(float(g_camera.viewportH) * 0.5f);
+
+}
+
 
 /*
  * structure declarations
@@ -18,9 +40,12 @@ int g_height = 600;
 
 class Sprite {
 public:
-	Sprite():w(0), h(0), tex(nullptr) {}
+	Sprite():w(0), h(0),
+             anchorX(0.5f), anchorY(0.5f),
+             tex(nullptr) {}
 
 	int w, h;
+    float anchorX, anchorY;
 	SDL_Texture* tex;
 };
 
@@ -67,7 +92,7 @@ FRAMEWORK_API void getSpriteSize(Sprite* s, int& w, int &h)
 	h = s->h;
 }
 
-FRAMEWORK_API void drawSprite(Sprite* sprite, int x, int y)
+FRAMEWORK_API void drawSprite(Sprite* sprite, int x, int y, bool relativeToCamera)
 {
 	SDL_assert(g_renderer);
 	SDL_assert(sprite);
@@ -75,8 +100,21 @@ FRAMEWORK_API void drawSprite(Sprite* sprite, int x, int y)
 	SDL_Rect r;
 	r.w = sprite->w;
 	r.h = sprite->h;
-	r.x = x;
-	r.y = y;
+    if(relativeToCamera) {
+      r.x = x - g_camera.topLeftX;
+      r.y = y - g_camera.topLeftY;
+    } else {
+      r.x = x;
+      r.y = y;
+    }
+
+    r.x -= int(sprite->anchorX * float(sprite->w));
+    r.y -= int(sprite->anchorY * float(sprite->h));
+
+    if(r.x < sprite->w || r.y < sprite->h || r.x > g_width + sprite->w || r.y > g_height + sprite->h) {
+      return;
+    }
+
 	SDL_RenderCopy(g_renderer, sprite->tex, NULL, &r);
 }
 
@@ -92,8 +130,6 @@ FRAMEWORK_API unsigned int getTickCount()
 {
 	return SDL_GetTicks();
 }
-
-
 
 /* Draw a Gimpish background pattern to show transparency in the image */
 static void draw_background(SDL_Renderer *renderer, int w, int h)
@@ -135,6 +171,10 @@ FRAMEWORK_API void showCursor(bool bShow)
 
 bool GKeyState[(int)FRKey::COUNT] = {};
 
+FRAMEWORK_API bool isKeyPressed(FRKey key) {
+    return GKeyState[(int)key];
+}
+
 FRAMEWORK_API int run(Framework* framework)
 {
     SDL_Window *window;
@@ -151,6 +191,8 @@ FRAMEWORK_API int run(Framework* framework)
 
 	bool fullscreen;
 	GFramework->PreInit(g_width, g_height, fullscreen);
+    g_camera.viewportW = g_width;
+    g_camera.viewportH = g_height;
 
     flags = SDL_WINDOW_HIDDEN;
 	if (fullscreen) {

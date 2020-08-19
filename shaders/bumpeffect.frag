@@ -43,8 +43,10 @@ void main() {
   float x = (texturePosition.x + valx * 0.5 + 0.5) * 0.5;
   float y = (texturePosition.y + valy + 0.5) * 0.5;
 
-  float noiseX = floor(x * 350.0) / 350.0;
-  float noiseY = floor(y * 350.0) / 350.0;
+  float pixelSize = 350.0 / (sin(PI * every(15.0, 3.0)) * 2.0 + 1.0);
+
+  float noiseX = floor(x * pixelSize) / pixelSize;
+  float noiseY = floor(y * pixelSize) / pixelSize;
 
   float t1 = mod(time, 15.0);
   if(t1 > 2.0) {
