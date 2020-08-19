@@ -7,7 +7,7 @@
 #define info(...)
 #endif
 
-using real = float;
+#include "Math.h"
 
 struct WorldData {
 
