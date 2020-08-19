@@ -20,6 +20,7 @@
 class Sprite;
 
 FRAMEWORK_API void setCameraPosition(int x, int y);
+FRAMEWORK_API void convertToCameraCoordSystem(int& x, int& y);
 
 FRAMEWORK_API Sprite* createSprite(const std::string& path = "");
 FRAMEWORK_API void drawSprite(Sprite*, int x, int y,
@@ -34,7 +35,7 @@ FRAMEWORK_API void destroySprite(Sprite* s);
 
 FRAMEWORK_API void setAnimation(Sprite* s, const std::string& animationName, bool repeat = true);
 FRAMEWORK_API void updateAnimation(Sprite* s, float deltaTime);
-FRAMEWORK_API void stopFrozenAnimation(Sprite* s, bool frozen);
+FRAMEWORK_API void setFrozenAnimation(Sprite* s, bool frozen);
 FRAMEWORK_API void resetAnimation(Sprite* s);
 FRAMEWORK_API void setAnimationFrameDuration(Sprite* s, float duration);
 

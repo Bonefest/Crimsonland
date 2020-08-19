@@ -27,6 +27,8 @@ public:
   }
   virtual ~Object() { }
 
+  virtual void init() { }
+
   void setAnimation(const std::string& name) {
     ::setAnimation(m_sprite, name);
   }
@@ -78,10 +80,26 @@ public:
     drawSprite(m_sprite, int(round(m_position.x)), int(round(m_position.y)), m_angle, relativeToCamera);
   }
 
+  virtual void onMove() { }
+  virtual void onStop() { }
+
   virtual void update(real deltaTime) {
     m_velocity += m_acceleration * deltaTime;
-    if(m_velocity.length() > m_maxSpeed) {
-      m_velocity.normalize();
+    real currentSpeed = m_velocity.length();
+    if(currentSpeed > 0.01 && m_idle) {
+      m_idle = false;
+      onMove();
+    }
+    else if(currentSpeed < 0.01 && !m_idle) {
+      m_idle = true;
+      onStop();
+    }
+
+    if(currentSpeed > m_maxSpeed) {
+
+      m_velocity.x /= currentSpeed;
+      m_velocity.y /= currentSpeed;
+
       m_velocity *= m_maxSpeed;
     }
     m_position += m_velocity * deltaTime;
@@ -99,6 +117,7 @@ protected:
   real m_maxSpeed;
   real m_angle;
 
+  bool m_idle;
 };
 
 class Entity: public Object {
@@ -127,18 +146,76 @@ struct WeaponData {
 class Player: public Entity {
 public:
 
-  void setMaxAmmo(int maxAmmo);
-  void setAmmo();
-
-  int getAmmo() const;
-
-  void onWeaponPickup(Message message) {
+  Player() {
 
   }
 
+  void init() {
+    registerMethod<Player>(int(MessageType::WEAPON_PICKUP),
+                           &Player::onWeaponPickup,
+                           this);
+
+    WeaponData fists = { WeaponType::FISTS, 0, 0};
+    m_weapons.push_back(fists);
+
+    m_currentWeaponIndex = 0;
+    onWeaponChanged();
+    onStop();
+  }
+
+  void onWeaponPickup(Message message) {
+    // TODO
+  }
+
+  void onCollisionWithZombie(Message message) {
+    // TODO
+  }
+
+  WeaponData getCurrentWeapon() const {
+    return m_weapons[m_currentWeaponIndex];
+  }
+
+  void nextWeapon() {
+    m_currentWeaponIndex = (m_currentWeaponIndex + 1) % m_weapons.size();
+    onWeaponChanged();
+  }
+
+  void previousWeapon() {
+    m_currentWeaponIndex = (m_currentWeaponIndex + m_weapons.size() - 1) % m_weapons.size();
+    onWeaponChanged();
+  }
+
+  void onMove() {
+    setFrozenAnimation(m_sprite, false);
+    resetAnimation(m_sprite);
+  }
+
+  void onStop() {
+    setFrozenAnimation(m_sprite, true);
+    resetAnimation(m_sprite);
+  }
+
+  void lookAt(const vec2& target) {
+    vec2 direction = target - m_position;
+    info("%f %f\n", direction.x, direction.y);
+    direction.normalize();
+
+    m_angle = radToDeg(vecToRad(direction));
+  }
+
 private:
-  int m_ammo;
-  int m_maxAmmo;
+  void onWeaponChanged() {
+    WeaponType currentWeaponType = m_weapons[m_currentWeaponIndex].type;
+    if(currentWeaponType == WeaponType::FISTS) {
+      setAnimation("player_walk");
+    }
+    else if(currentWeaponType == WeaponType::PISTOL) {
+      setAnimation("player_pistol");
+    }
+    else {
+      // TODO
+    }
+  }
 
   std::size_t m_currentWeaponIndex;
   std::vector<WeaponData> m_weapons;
@@ -208,10 +285,8 @@ private:
   std::vector<Zombie*> m_zombies;
 
 
-  Entity* m_player;
+  Player* m_player;
   Texture* m_screenTexture;
-  float m_spritePosX;
-  float m_spritePosY;
 
   Program m_bumpProgram;
 

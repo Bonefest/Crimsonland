@@ -18,6 +18,7 @@ enum class MessageType {
 };
 
 enum class WeaponType {
+  FISTS,
   PISTOL,
   SHOTGUN,
   RIFLE,

@@ -48,21 +48,17 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
-
-  m_player = new Entity();
-  m_player->setSize(30.0f);
-  m_player->setPosition(320, 240);
-  m_player->setAnimation("player_walk");
-
-  m_spritePosX = 320;
-  m_spritePosY = 240;
+  initPlayer();
 
   return true;
 }
 
 void CrimsonlandFramework::initPlayer() {
 
-  registerMethod<CrimsonlandFramework>(1, &CrimsonlandFramework::test, this);
+  m_player = new Player();
+  m_player->setSize(30.0f);
+  m_player->setPosition(320, 240);
+  m_player->init();
 
 }
 
@@ -149,12 +145,8 @@ void CrimsonlandFramework::drawToScreen() {
 }
 
 void CrimsonlandFramework::onMouseMove(int x, int y, int xrelative, int yrelative) {
-  info("%d %d\n", x, y);
-
-
-
-  float angle = atan2(float(y) - 0.5f * m_worldData.windowHeight, float(x) - 0.5f * m_worldData.windowWidth) / (6.28) * 360.0f;
-  m_angle = angle;
+  vec2 vecFromCenter = vec2(x, y) - vec2(m_worldData.windowWidth, m_worldData.windowHeight) * 0.5f;
+  m_player->lookAt(vecFromCenter + m_player->getPosition());
 }
 
 void CrimsonlandFramework::onKeyPressed(FRKey k) {

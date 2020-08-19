@@ -34,6 +34,11 @@ FRAMEWORK_API void setCameraPosition(int x, int y) {
 
 }
 
+FRAMEWORK_API void convertToCameraCoordSystem(int& x, int& y) {
+  x = x - g_camera.topLeftX;
+  y = y - g_camera.topLeftY;
+}
+
 #include "animation.cpp"
 
 
@@ -181,15 +186,16 @@ FRAMEWORK_API void drawSprite(Sprite* sprite, int x, int y,
       dst.y = y;
     }
 
-    dst.x -= int(sprite->anchorX * float(sprite->w));
-    dst.y -= int(sprite->anchorY * float(sprite->h));
+    SDL_Rect src = sprite->animation.getSourceRect();
+
+    dst.x -= int(sprite->anchorX * float(src.w));
+    dst.y -= int(sprite->anchorY * float(src.h));
 
     if(dst.x < sprite->w || dst.y < sprite->h ||
        dst.x > g_width + sprite->w || dst.y > g_height + sprite->h) {
       return;
     }
 
-    SDL_Rect src = sprite->animation.getSourceRect();
     dst.w = src.w;
     dst.h = src.h;
 
