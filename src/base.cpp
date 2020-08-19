@@ -52,6 +52,8 @@ WorldData parseCommands(int argc, char** commands) {
       printf(" -num_enemies [num] - to set desired maximal number of enemies\n"
              "  (minimal %d maximal %d)\n", MIN_ENEMIES, MAX_ENEMIES);
 
+      // TODO(mizofix)
+
       exit(0);
     }
     else if(strcasecmp(commands[i], "-window") == 0 && isNotLast) {

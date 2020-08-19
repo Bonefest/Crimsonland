@@ -4,8 +4,24 @@ uniform sampler2D text;
 uniform float time;
 uniform vec2 screenSize;
 
+#define PI 3.1415926
+#define HALF_PI 1.5707963
+
 float random (vec2 st) {
   return fract(sin(dot(st.xy, vec2(12.9898,78.233)))*43758.5453123);
+}
+
+// NOTE(mizofix): this function returns normalized value that should occur
+// every n seconds (e.g shaking every 15 secs with duration 2 secs)
+float every(float nsec, float duration) {
+  float result = mod(time, nsec);
+  if(result > duration) {
+    result = 0.0;
+  }
+
+  result /= duration;
+
+  return result;
 }
 
 void main() {
@@ -15,9 +31,6 @@ void main() {
   vec2 normalizedScreenPos = vec2(gl_FragCoord.x / screenSize.x,
                                   gl_FragCoord.y / screenSize.y);
 
-  float value = length(normalizedScreenPos - vec2(0.5, 0.5)) * 0.1;
-  float valuex = (normalizedScreenPos.x - 0.5) * 0.1 + sin(time) * 0.5 + 0.5;
-  float valuey = (normalizedScreenPos.y - 0.5) * 0.1 + sin(time) * 0.5 + 0.5;
 
   float xdist = texturePosition.x - 0.5;
   float ydist = texturePosition.y - 0.5;
@@ -33,7 +46,19 @@ void main() {
   float noiseX = floor(x * 350.0) / 350.0;
   float noiseY = floor(y * 350.0) / 350.0;
 
-  float lineVal = sin(time * 0.5f) * 2.0 + 1.0f;
+  float t1 = mod(time, 15.0);
+  if(t1 > 2.0) {
+    t1 = 0.0;
+  }
+
+  // NOTE(mizofix): White-line effect
+
+  float wlDuration = 3.0;
+  float wlPeriod = 15.0;
+  float wlCurrentTimeVal = every(wlPeriod, wlDuration);
+
+  float lineVal = sin(HALF_PI * wlCurrentTimeVal) * 1.4 - 0.2f;
+
   float k = 0.2;
   float lagLineDist = abs(texturePosition.y - lineVal);
   float maxDist = 0.02 + random(vec2(time * 0.3, time * 0.2)) * 0.025f;
@@ -45,14 +70,27 @@ void main() {
 
   vec4 gray = vec4(vec3(random(vec2(noiseX + rnd, noiseY + rnd))), 1.0) * k;
 
-  //vec4 gray = vec4(vec3(random(vec2(y + rnd, y + rnd))), 1.0) * 0.25;
+  // NOTE(mizofix): Distortion effect
 
-  float distortionK = 0.0025;
+  float dstDuration = 3.0;
+  float dstPeriod = 15.0;
+  float dstCurrentTimeVal = every(dstPeriod, dstDuration);
+
+  float distortionKX = 0.0025;
+  float distortionKY = 0.0;
+
+  // NOTE(mizofix): Whenever pixel is close to white-line - distortion strength
+  // is increasing
   if(lagLineDist < maxDist) {
-    distortionK = 0.1;
+    distortionKX = 0.2;
+    distortionKY = 0.05;
   }
 
-  vec4 color = texture2D(text, vec2(x + rnd * distortionK, y + rnd * 0.00)) + gray;
+  float s = sin(HALF_PI * dstCurrentTimeVal) * (4.0 + rnd * 2.0);
+  distortionKX *= s;
+  distortionKY *= s * s;
+
+  vec4 color = texture2D(text, vec2(x + rnd * distortionKX, y + rnd * distortionKY)) + gray;
   gl_FragColor = color;
   //gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }
