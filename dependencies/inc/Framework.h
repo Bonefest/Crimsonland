@@ -21,7 +21,7 @@ class Sprite;
 
 FRAMEWORK_API void setCameraPosition(int x, int y);
 
-FRAMEWORK_API Sprite* createSprite(const std::string& path);
+FRAMEWORK_API Sprite* createSprite(const std::string& path = "");
 FRAMEWORK_API void drawSprite(Sprite*, int x, int y,
                               float angle = 0.0f, bool relativeToCamera = true);
 

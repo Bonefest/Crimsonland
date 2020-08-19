@@ -138,6 +138,11 @@ public:
 
 FRAMEWORK_API Sprite* createSprite(const std::string& animationName)
 {
+
+  if(animationName == "") {
+    return new Sprite();
+  }
+
   if(!animationIsLoaded(animationName)) {
     return nullptr;
   }

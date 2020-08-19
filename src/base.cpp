@@ -42,13 +42,17 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
-  m_testSprite = createSprite("player_walk");
   m_screenTexture = createTexture(m_worldData.windowWidth, m_worldData.windowHeight);
 
-  if(m_testSprite == nullptr || m_screenTexture == nullptr) {
+  if(m_screenTexture == nullptr) {
     return false;
   }
 
+
+  m_player = new Entity();
+  m_player->setSize(30.0f);
+  m_player->setPosition(320, 240);
+  m_player->setAnimation("player_walk");
 
   m_spritePosX = 320;
   m_spritePosY = 240;
@@ -56,19 +60,29 @@ bool CrimsonlandFramework::Init() {
   return true;
 }
 
+void CrimsonlandFramework::initPlayer() {
+
+  registerMethod<CrimsonlandFramework>(1, &CrimsonlandFramework::test, this);
+
+}
+
 bool CrimsonlandFramework::Tick() {
- if(isKeyPressed(FRKey::LEFT)) {
-    m_spritePosX -= 100.0f * m_deltaTime;
+
+  vec2 acceleration;
+  if(isKeyPressed(FRKey::LEFT)) {
+    acceleration += vec2(-5.0f, 0.0f);
   }
 
   if(isKeyPressed(FRKey::RIGHT)) {
-    m_spritePosX += 100.0f * m_deltaTime;
+    acceleration += vec2( 5.0f, 0.0f);
   }
 
-  setCameraPosition(m_spritePosX, m_spritePosY);
+  m_player->setAcceleration(acceleration);
 
-  setTextureAsTarget(m_screenTexture);
-  updateAnimation(m_testSprite, m_deltaTime);
+  vec2 playerPosition = m_player->getPosition();
+  setCameraPosition(int(playerPosition.x), int(playerPosition.y));
+
+  update();
   draw();
   drawToScreen();
   updateTimer();
@@ -76,7 +90,13 @@ bool CrimsonlandFramework::Tick() {
   return false;
 }
 
+void CrimsonlandFramework::update() {
+  m_player->update(m_deltaTime);
+}
+
 void CrimsonlandFramework::draw() {
+  setTextureAsTarget(m_screenTexture);
+
   drawTestBackground();
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
   for(int x = 0; x < m_worldData.windowWidth; x += 20) {
@@ -84,11 +104,8 @@ void CrimsonlandFramework::draw() {
   }
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 
-  drawSprite(m_testSprite, round(m_spritePosX), round(m_spritePosY), m_angle);
-  drawSprite(m_testSprite, 320, 150, false);
-  drawSprite(m_testSprite, 320, 300);
-  drawSprite(m_testSprite, 440, 240);
-  drawSprite(m_testSprite, 320 + std::sin(m_lastTime) * 240, 240);
+  m_player->draw();
+
 }
 
 void CrimsonlandFramework::updateTimer() {
@@ -145,6 +162,32 @@ void CrimsonlandFramework::onKeyPressed(FRKey k) {
 }
 
 void CrimsonlandFramework::Close() {
-  destroySprite(m_testSprite);
+  delete m_player;
   destroyTexture(m_screenTexture);
+}
+
+void CrimsonlandFramework::collisionSystem() {
+  penetrationResolution();
+}
+
+void CrimsonlandFramework::penetrationResolution() {
+
+  // TODO(mizofix): more than one iteration
+  // NOTE(mizofix): warning! extremely slow function
+  for(auto entityAIt = m_entities.begin(); entityAIt != m_entities.end(); entityAIt++) {
+    for(auto entityBIt = entityAIt + 1; entityBIt != m_entities.end(); entityBIt++) {
+      real totalSize = (*entityAIt)->getSize() + (*entityBIt)->getSize();
+      real distance = (*entityAIt)->getPosition().distance((*entityBIt)->getPosition());
+
+      if(distance < totalSize) {
+        vec2 direction = ((*entityBIt)->getPosition() - (*entityAIt)->getPosition());
+        direction.normalize();
+        real delta = totalSize - distance;
+
+        (*entityAIt)->setPosition((*entityAIt)->getPosition() - direction * delta * 0.5f);
+        (*entityBIt)->setPosition((*entityBIt)->getPosition() + direction * delta * 0.5f);
+      }
+
+    }
+  }
 }

@@ -47,6 +47,10 @@ real vec2::length() const {
   return sqrt(x*x + y*y);
 }
 
+real vec2::sqLength() const {
+  return x*x + y*y;
+}
+
 real vec2::distance(const vec2& vec) const {
   return (*this - vec).length();
 }
@@ -79,4 +83,8 @@ vec2 radToVec(real rad) {
 
 real vecToRad(const vec2& vec) {
   return atan2(vec.y, vec.x);
+}
+
+real percentOf(real value, real maxValue) {
+  return value / maxValue * 100.0f;
 }

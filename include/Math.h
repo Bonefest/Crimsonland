@@ -2,7 +2,6 @@
 #define MATH_H_INCLUDED
 
 #define PI 3.1415926
-
 using real = float;
 
 struct vec2 {
@@ -19,6 +18,7 @@ struct vec2 {
 
   real dot(const vec2& vec) const;
   real length() const;
+  real sqLength() const;
   real distance(const vec2& vec) const;
   void normalize();
   vec2 perp() const;

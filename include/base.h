@@ -11,11 +11,25 @@
 #include <math.h>
 #include <stdint.h>
 #include <cstdio>
+#include <vector>
 
 #include "Math.h"
+#include "Message.h"
 
 class Object {
 public:
+  // NOTE(mizofix): z-order for drawing graph
+  int zorder;
+public:
+
+  Object() {
+    m_sprite = createSprite();
+  }
+  virtual ~Object() { }
+
+  void setAnimation(const std::string& name) {
+    ::setAnimation(m_sprite, name);
+  }
 
   void setPosition(const vec2& position) {
     m_position = position;
@@ -24,6 +38,10 @@ public:
   void setPosition(real x, real y) {
     m_position.x= x;
     m_position.y = y;
+  }
+
+  void moveBy(const vec2& move) {
+    m_position += move;
   }
 
   // NOTE(mizofix): We use circle shape for physics calculations
@@ -47,13 +65,27 @@ public:
     m_velocity = velocity;
   }
 
+
+  vec2 getPosition() const {
+    return m_position;
+  }
+
+  real getSize() const {
+    return m_size;
+  }
+
   virtual void draw(bool relativeToCamera = true) {
     drawSprite(m_sprite, int(round(m_position.x)), int(round(m_position.y)), m_angle, relativeToCamera);
   }
 
   virtual void update(real deltaTime) {
     m_velocity += m_acceleration * deltaTime;
+    if(m_velocity.length() > m_maxSpeed) {
+      m_velocity.normalize();
+      m_velocity *= m_maxSpeed;
+    }
     m_position += m_velocity * deltaTime;
+    ::updateAnimation(m_sprite, deltaTime);
   }
 
 protected:
@@ -66,6 +98,7 @@ protected:
 
   real m_maxSpeed;
   real m_angle;
+
 };
 
 class Entity: public Object {
@@ -85,7 +118,41 @@ protected:
 
 };
 
+struct WeaponData {
+  WeaponType type;
+  int ammo;
+  int maxAmmo;
+};
+
+class Player: public Entity {
+public:
+
+  void setMaxAmmo(int maxAmmo);
+  void setAmmo();
+
+  int getAmmo() const;
+
+  void onWeaponPickup(Message message) {
+
+  }
+
+private:
+  int m_ammo;
+  int m_maxAmmo;
+
+  std::size_t m_currentWeaponIndex;
+  std::vector<WeaponData> m_weapons;
+
+};
+
 class Zombie : public Entity {
+public:
+
+  void draw(bool relativeToCamera) {
+    // TODO(mizofix): draw health bar
+    Object::draw(relativeToCamera);
+
+  }
 
 };
 
@@ -121,18 +188,28 @@ public:
 
   virtual void onKeyReleased(FRKey k) { }
 
+  void test(Message message) { }
+
 private:
+
+  void initPlayer();
 
   void update();
   void draw();
   void drawToScreen();
   void updateTimer();
 
+  void collisionSystem();
+  void penetrationResolution();
+
   WorldData m_worldData;
 
-  Texture* m_screenTexture;
-  Sprite* m_testSprite;
+  std::vector<Entity*> m_entities;
+  std::vector<Zombie*> m_zombies;
 
+
+  Entity* m_player;
+  Texture* m_screenTexture;
   float m_spritePosX;
   float m_spritePosY;
 
