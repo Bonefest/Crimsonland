@@ -12,6 +12,17 @@
 #include <stdint.h>
 #include <cstdio>
 
+class Entity {
+public:
+
+private:
+  Sprite* m_sprite;
+  float m_posX, m_posY;
+  float m_size;
+  float fov;
+
+};
+
 
 class CrimsonlandFramework : public Framework {
 
@@ -27,7 +38,7 @@ public:
 
   virtual bool Tick();
 
-  virtual void onMouseMove(int x, int y, int xrelative, int yrelative) { }
+  virtual void onMouseMove(int x, int y, int xrelative, int yrelative);
 
   virtual void onMouseButtonClick(FRMouseButton button, bool isReleased) { }
 
@@ -37,9 +48,10 @@ public:
 
 private:
 
-  void activateTextureRendering();
-  void deactivateTextureRendering();
-  void drawTextureToScreen();
+  void update();
+  void draw();
+  void drawToScreen();
+  void updateTimer();
 
   WorldData m_worldData;
 
@@ -53,6 +65,8 @@ private:
 
   float m_lastTime;
   float m_deltaTime;
+
+  float m_angle;
 };
 
 

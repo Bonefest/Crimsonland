@@ -22,7 +22,8 @@ class Sprite;
 FRAMEWORK_API void setCameraPosition(int x, int y);
 
 FRAMEWORK_API Sprite* createSprite(const std::string& path);
-FRAMEWORK_API void drawSprite(Sprite*, int x, int y, bool relativeToCamera = true);
+FRAMEWORK_API void drawSprite(Sprite*, int x, int y,
+                              float angle = 0.0f, bool relativeToCamera = true);
 
 // NOTE(mizofix): Anchor point coords should be in range [0, 1]
 // (0, 0) corresponds to top-left corner
@@ -35,6 +36,7 @@ FRAMEWORK_API void setAnimation(Sprite* s, const std::string& animationName, boo
 FRAMEWORK_API void updateAnimation(Sprite* s, float deltaTime);
 FRAMEWORK_API void stopFrozenAnimation(Sprite* s, bool frozen);
 FRAMEWORK_API void resetAnimation(Sprite* s);
+FRAMEWORK_API void setAnimationFrameDuration(Sprite* s, float duration);
 
 FRAMEWORK_API bool loadAnimations(const std::string& path);
 
@@ -57,6 +59,8 @@ FRAMEWORK_API void getScreenSize(int& w, int &h);
 FRAMEWORK_API unsigned int getTickCount();
 
 FRAMEWORK_API void showCursor(bool bShow);
+
+FRAMEWORK_API void setDefaultRenderTarget();
 
 enum class FRKey {
 	RIGHT,

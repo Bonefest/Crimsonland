@@ -42,7 +42,7 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
-  m_testSprite = createSprite("zombie1_move");
+  m_testSprite = createSprite("player_walk");
   m_screenTexture = createTexture(m_worldData.windowWidth, m_worldData.windowHeight);
 
   if(m_testSprite == nullptr || m_screenTexture == nullptr) {
@@ -68,22 +68,38 @@ bool CrimsonlandFramework::Tick() {
   setCameraPosition(m_spritePosX, m_spritePosY);
 
   setTextureAsTarget(m_screenTexture);
+  updateAnimation(m_testSprite, m_deltaTime);
+  draw();
+  drawToScreen();
+  updateTimer();
 
+  return false;
+}
+
+void CrimsonlandFramework::draw() {
   drawTestBackground();
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
   for(int x = 0; x < m_worldData.windowWidth; x += 20) {
-       SDL_RenderDrawLine(renderer, x, 0, x, m_worldData.windowHeight);
+    SDL_RenderDrawLine(renderer, x, 0, x, m_worldData.windowHeight);
   }
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 
-  drawSprite(m_testSprite, round(m_spritePosX), round(m_spritePosY));
+  drawSprite(m_testSprite, round(m_spritePosX), round(m_spritePosY), m_angle);
   drawSprite(m_testSprite, 320, 150, false);
   drawSprite(m_testSprite, 320, 300);
   drawSprite(m_testSprite, 440, 240);
-
   drawSprite(m_testSprite, 320 + std::sin(m_lastTime) * 240, 240);
+}
 
-  deactivateTextureRendering();
+void CrimsonlandFramework::updateTimer() {
+  float time = float(getTickCount()) / 1000.0f;
+  m_deltaTime = time - m_lastTime;
+  m_lastTime = time;
+}
+
+void CrimsonlandFramework::drawToScreen() {
+
+  setDefaultRenderTarget();
 
   SDL_RenderClear(renderer);
 
@@ -113,19 +129,19 @@ bool CrimsonlandFramework::Tick() {
 
   glEnd();
 
-  float time = float(getTickCount()) / 1000.0f;
-  m_deltaTime = time - m_lastTime;
-  m_lastTime = time;
+}
 
-  return false;
+void CrimsonlandFramework::onMouseMove(int x, int y, int xrelative, int yrelative) {
+  info("%d %d\n", x, y);
+
+
+
+  float angle = atan2(float(y) - 0.5f * m_worldData.windowHeight, float(x) - 0.5f * m_worldData.windowWidth) / (6.28) * 360.0f;
+  m_angle = angle;
 }
 
 void CrimsonlandFramework::onKeyPressed(FRKey k) {
 
-}
-
-void CrimsonlandFramework::deactivateTextureRendering() {
-  SDL_SetRenderTarget(renderer, NULL);
 }
 
 void CrimsonlandFramework::Close() {

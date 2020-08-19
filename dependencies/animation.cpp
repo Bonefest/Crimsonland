@@ -48,6 +48,10 @@ public:
 
   }
 
+  void setFrameDuration(float duration) {
+    m_frameDuration = duration;
+  }
+
   SDL_Rect getSourceRect() const {
     SDL_Rect source;
     source.w = m_frameWidth;
@@ -76,8 +80,8 @@ public:
 
 private:
   int m_startX, m_startY;
-  int m_endX, m_endY;
   int m_currentX, m_currentY;
+  int m_endX, m_endY;
 
   int m_frameWidth;
   int m_frameHeight;

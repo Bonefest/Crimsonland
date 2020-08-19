@@ -161,7 +161,8 @@ FRAMEWORK_API void getSpriteSize(Sprite* s, int& w, int &h)
 	h = s->h;
 }
 
-FRAMEWORK_API void drawSprite(Sprite* sprite, int x, int y, bool relativeToCamera)
+FRAMEWORK_API void drawSprite(Sprite* sprite, int x, int y,
+                              float angle, bool relativeToCamera)
 {
 	SDL_assert(g_renderer);
 	SDL_assert(sprite);
@@ -187,7 +188,7 @@ FRAMEWORK_API void drawSprite(Sprite* sprite, int x, int y, bool relativeToCamer
     dst.w = src.w;
     dst.h = src.h;
 
-	SDL_RenderCopy(g_renderer, sprite->animation.texture, NULL, &dst);
+	SDL_RenderCopyEx(g_renderer, sprite->animation.texture, &src, &dst, angle, NULL, SDL_FLIP_NONE);
 }
 
 FRAMEWORK_API void setSpriteAnchorPoint(Sprite* sprite, float x, float y) {
@@ -214,6 +215,10 @@ FRAMEWORK_API void setFrozenAnimation(Sprite* sprite, bool frozen) {
 
 FRAMEWORK_API void resetAnimation(Sprite* sprite) {
   sprite->animation.reset();
+}
+
+FRAMEWORK_API void setAnimationFrameDuration(Sprite* sprite, float duration) {
+  sprite->animation.setFrameDuration(duration);
 }
 
 
@@ -267,6 +272,11 @@ FRAMEWORK_API void showCursor(bool bShow)
 {
 	SDL_ShowCursor(bShow?1:0);
 }
+
+FRAMEWORK_API void setDefaultRenderTarget() {
+  SDL_SetRenderTarget(g_renderer, NULL);
+}
+
 
 bool GKeyState[(int)FRKey::COUNT] = {};
 

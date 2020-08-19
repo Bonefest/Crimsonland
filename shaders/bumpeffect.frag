@@ -93,6 +93,10 @@ void main() {
   distortionKY *= s * s;
 
   vec4 color = texture2D(text, vec2(x + rnd * distortionKX, y + rnd * distortionKY)) + gray;
-  gl_FragColor = color;
+
+  float g = 0.3 * color.r + 0.59 * color.g + 0.11 * color.b;
+
+  gl_FragColor = vec4(g, g, g, 1.0);
+
   //gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }
