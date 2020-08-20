@@ -63,6 +63,7 @@ FRAMEWORK_API void getScreenSize(int& w, int &h);
 FRAMEWORK_API unsigned int getTickCount();
 
 FRAMEWORK_API void showCursor(bool bShow);
+FRAMEWORK_API void getCursorPos(int* x, int* y);
 
 FRAMEWORK_API void setDefaultRenderTarget();
 

@@ -1,7 +1,10 @@
 #ifndef COMPONENT_H_INCLUDED
 #define COMPONENT_H_INCLUDED
 
+#include <vector>
+
 #include "Math.h"
+#include "Common.h"
 #include "Framework.h"
 
 enum class ComponentID {  Model,
@@ -12,6 +15,7 @@ enum class ComponentID {  Model,
                           Zombie,
                           Effect,
                           Bullet,
+                          Weapon,
                           Powerup,
                           // HpBar ??
                           COUNT };
@@ -75,6 +79,38 @@ struct Attributes: Component {
   real maxSpeed;
 
   int level;
+};
+
+struct Player: Component {
+
+  ComponentID getID() {
+    return ComponentID::Player;
+  }
+
+  std::size_t currentWeaponIndex;
+  std::vector<WeaponData> weapons;
+
+};
+
+struct Physics: Component {
+
+  Physics(): mass(1.0f), damping(1.0f) { }
+
+  ComponentID getID() {
+    return ComponentID::Physics;
+  }
+
+  // TODO(mizofix): change to MKS system of units
+  vec2 acceleration;
+  vec2 velocity;
+
+  real mass;
+  real damping;
+
+  // NOTE(mizofix): true if an entity began or stop moving
+  // during last frame
+  bool transition;
+  bool idling;
 };
 
 struct Zombie: Component {

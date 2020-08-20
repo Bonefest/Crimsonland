@@ -51,8 +51,6 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
-  initPlayer();
-
   return true;
 }
 
@@ -60,17 +58,11 @@ void CrimsonlandFramework::initECS() {
   m_context.registry = &m_registry;
   m_context.data = m_worldData;
 
+  m_systemManager.addSystem(m_context, new PhysicsIntegrationSystem());
+  m_systemManager.addSystem(m_context, new PlayerSystem());
   m_systemManager.addSystem(m_context, new ZombieRenderingSystem());
 }
 
-void CrimsonlandFramework::initPlayer() {
-
-  m_player = new Player();
-  m_player->setSize(30.0f);
-  m_player->setPosition(320, 240);
-  m_player->init();
-
-}
 
 bool CrimsonlandFramework::Tick() {
 
@@ -83,10 +75,7 @@ bool CrimsonlandFramework::Tick() {
     acceleration += vec2( 5.0f, 0.0f);
   }
 
-  m_player->setAcceleration(acceleration);
-
-  vec2 playerPosition = m_player->getPosition();
-  setCameraPosition(int(playerPosition.x), int(playerPosition.y));
+  // setCameraPosition(int(playerPosition.x), int(playerPosition.y));
 
   update();
   draw();
@@ -97,7 +86,7 @@ bool CrimsonlandFramework::Tick() {
 }
 
 void CrimsonlandFramework::update() {
-  m_player->update(m_deltaTime);
+  m_systemManager.updateSystems(m_context, m_deltaTime);
 }
 
 void CrimsonlandFramework::draw() {
@@ -110,8 +99,7 @@ void CrimsonlandFramework::draw() {
   }
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 
-  m_player->draw();
-
+  m_systemManager.drawSystems(m_context);
 }
 
 void CrimsonlandFramework::updateTimer() {
@@ -155,8 +143,7 @@ void CrimsonlandFramework::drawToScreen() {
 }
 
 void CrimsonlandFramework::onMouseMove(int x, int y, int xrelative, int yrelative) {
-  vec2 vecFromCenter = vec2(x, y) - vec2(m_worldData.windowWidth, m_worldData.windowHeight) * 0.5f;
-  m_player->lookAt(vecFromCenter + m_player->getPosition());
+
 }
 
 void CrimsonlandFramework::onKeyPressed(FRKey k) {
@@ -164,7 +151,6 @@ void CrimsonlandFramework::onKeyPressed(FRKey k) {
 }
 
 void CrimsonlandFramework::Close() {
-  delete m_player;
   destroyTexture(m_screenTexture);
 }
 

@@ -48,6 +48,7 @@ public:
 
   EntitiesContainer findEntities(Bitfield components);
 
+  // NOTE(mizofix): shouldn't we move getID() to static?
   template <typename T>
   T* getComponent(Entity entity, ComponentID id) {
 

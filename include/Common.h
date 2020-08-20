@@ -27,6 +27,22 @@ struct WorldData {
   real maxPlayerSpeed;
 };
 
+enum class WeaponType {
+  FISTS,
+    PISTOL,
+    SHOTGUN,
+    RIFLE,
+    CHAINGUN
+    };
+
+
+struct WeaponData {
+  WeaponType type;
+  int        maxAmmo;
+  int        ammo;
+};
+
+
 using Entity = uint32_t;
 
 #endif

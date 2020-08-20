@@ -14,18 +14,18 @@ public:
     }
   }
 
-  void addSystem(ECSContext context, System* system) {
+  void addSystem(ECSContext& context, System* system) {
     m_systems.push_back(system);
     system->init(context);
   }
 
-  void updateSystems(ECSContext context, real deltaTime) {
+  void updateSystems(ECSContext& context, real deltaTime) {
     for(auto system: m_systems) {
       system->update(context, deltaTime);
     }
   }
 
-  void drawSystems(ECSContext context) {
+  void drawSystems(ECSContext& context) {
     for(auto system: m_systems) {
       system->draw(context);
     }

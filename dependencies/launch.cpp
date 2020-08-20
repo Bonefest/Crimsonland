@@ -289,6 +289,10 @@ FRAMEWORK_API void showCursor(bool bShow)
 	SDL_ShowCursor(bShow?1:0);
 }
 
+FRAMEWORK_API void getCursorPos(int* x, int* y) {
+  SDL_GetMouseState(x, y);
+}
+
 FRAMEWORK_API void setDefaultRenderTarget() {
   SDL_SetRenderTarget(g_renderer, NULL);
 }

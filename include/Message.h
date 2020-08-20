@@ -25,13 +25,6 @@ enum class MessageType {
   COUNT
 };
 
-enum class WeaponType {
-  FISTS,
-  PISTOL,
-  SHOTGUN,
-  RIFLE,
-  CHAINGUN
-};
 
 class Registry;
 
