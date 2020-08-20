@@ -56,6 +56,7 @@ public:
 
     Physics* physics = new Physics();
     physics->mass = 100.0f;
+    physics->size = 32.0f;
 
     // TODO(mizofix): change damping based on current tile
     physics->damping = 0.98f;
@@ -97,6 +98,18 @@ public:
     }
     if(isKeyPressed(FRKey::DOWN)) {
       acceleration += vec2(0.0f, 100.0f);
+
+      Message msg;
+      msg.type = int(MessageType::SPAWN_EFFECT);
+      msg.effect_info.type = EffectType::BLOOD_1;
+      msg.effect_info.x = transf->position.x;
+      msg.effect_info.y = transf->position.y;
+      msg.effect_info.scale = 1.0f;
+      msg.effect_info.angle = 0.0f;
+      msg.effect_info.lifetime = 0.06;
+      msg.effect_info.fadeOut = false;
+
+      notify(msg);
     }
 
     physics->acceleration = acceleration;
@@ -236,6 +249,92 @@ public:
     }
 
   }
+};
+
+
+struct Effect {
+
+  Sprite* sprite;
+  vec2 position;
+  real scale;
+  real lifetime;
+  real elapsedTime;
+  real angle;
+  bool fadeOut;
+
+};
+
+using EffectsContainer = std::list<Effect>;
+
+class EffectsSystem: public System {
+public:
+
+  virtual void init(ECSContext& context) {
+    registerMethod(int(MessageType::SPAWN_EFFECT),
+                   &EffectsSystem::onSpawnEffect,
+                   this);
+
+    m_maximalEffectsNumber = context.data.maxEffectsNumber;
+  }
+
+  virtual void update(ECSContext& context, real deltaTime) {
+    for(auto effectIt = m_effects.begin(); effectIt != m_effects.end();) {
+      effectIt->elapsedTime += deltaTime;
+      if(effectIt->elapsedTime >= effectIt->lifetime) {
+        effectIt = m_effects.erase(effectIt);
+      }
+      else {
+        updateAnimation(effectIt->sprite, deltaTime);
+        effectIt++;
+      }
+    }
+  }
+
+  virtual void draw(ECSContext& context) {
+    for(auto& effect: m_effects) {
+      int alpha = int((1.0f - effect.elapsedTime / effect.lifetime) * 255);
+      drawSprite(effect.sprite, round(effect.position.x), round(effect.position.y), alpha,
+                 effect.scale, effect.angle);
+    }
+  }
+
+  void onSpawnEffect(Message message) {
+
+    Effect newEffect;
+    newEffect.position.x = message.effect_info.x;
+    newEffect.position.y = message.effect_info.y;
+    newEffect.scale = message.effect_info.scale;
+    newEffect.angle = message.effect_info.angle;
+    newEffect.lifetime = message.effect_info.lifetime;
+    newEffect.elapsedTime = 0.0f;
+    newEffect.fadeOut = message.effect_info.fadeOut;
+
+    const char* effectName = "";
+
+    switch(message.effect_info.type) {
+    case EffectType::BLOOD_1: effectName = "blood_1"; break;
+    case EffectType::BLOOD_2: effectName = "blood_2"; break;
+    case EffectType::BLOOD_3: effectName = "blood_3"; break;
+    case EffectType::STEPS: effectName = "steps"; break;
+
+    default: break;
+    }
+
+    newEffect.sprite = createSprite(effectName);
+    if(newEffect.sprite != nullptr) {
+      if(m_effects.size() > m_maximalEffectsNumber) {
+        m_effects.pop_front();
+      }
+
+      setFrozenAnimation(newEffect.sprite, false);
+
+      m_effects.push_back(newEffect);
+    }
+  }
+
+private:
+  EffectsContainer m_effects;
+  uint32_t         m_maximalEffectsNumber;
 };
 
 #endif

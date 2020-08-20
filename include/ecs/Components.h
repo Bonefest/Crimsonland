@@ -34,6 +34,12 @@ struct Model: Component {
 
  Model(): sprite(nullptr) { }
 
+  ~Model() {
+    if(sprite != nullptr) {
+      destroySprite(sprite);
+    }
+  }
+
   virtual ComponentID getID() {
     return ComponentID::Model;
   }
@@ -106,6 +112,8 @@ struct Physics: Component {
 
   real mass;
   real damping;
+
+  real size;
 
   // NOTE(mizofix): true if an entity began or stop moving
   // during last frame

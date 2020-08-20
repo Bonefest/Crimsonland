@@ -8,6 +8,7 @@
 
 CrimsonlandFramework::CrimsonlandFramework(int argc, char** commands): m_lastTime(0.0f) {
   m_worldData = parseCommands(argc, commands);
+  m_worldData.maxEffectsNumber = 10;
 
   info("-------------------------\n");
   info("final world data values are:\n");
@@ -38,7 +39,7 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
-  if(!loadAnimations("data/zombie_animations.json")) {
+  if(!loadAnimations("data/animations.json")) {
     return false;
   }
 
@@ -61,21 +62,12 @@ void CrimsonlandFramework::initECS() {
   m_systemManager.addSystem(m_context, new PhysicsIntegrationSystem());
   m_systemManager.addSystem(m_context, new PlayerSystem());
   m_systemManager.addSystem(m_context, new ZombieRenderingSystem());
+  m_systemManager.addSystem(m_context, new EffectsSystem());
+
 }
 
 
 bool CrimsonlandFramework::Tick() {
-
-  vec2 acceleration;
-  if(isKeyPressed(FRKey::LEFT)) {
-    acceleration += vec2(-5.0f, 0.0f);
-  }
-
-  if(isKeyPressed(FRKey::RIGHT)) {
-    acceleration += vec2( 5.0f, 0.0f);
-  }
-
-  // setCameraPosition(int(playerPosition.x), int(playerPosition.y));
 
   update();
   draw();

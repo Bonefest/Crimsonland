@@ -25,6 +25,8 @@ struct WorldData {
   real maxPlayerHealth;
   real maxPlayerStamina;
   real maxPlayerSpeed;
+
+  uint32_t maxEffectsNumber;
 };
 
 enum class WeaponType {

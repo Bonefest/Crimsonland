@@ -414,6 +414,10 @@ FRAMEWORK_API int run(Framework* framework)
             while ( SDL_PollEvent(&event) ) {
                 switch (event.type) {
                     case SDL_KEYUP:
+                      if(event.key.keysym.sym == SDLK_a) event.key.keysym.sym = SDLK_LEFT;
+                      if(event.key.keysym.sym == SDLK_d) event.key.keysym.sym = SDLK_RIGHT;
+                      if(event.key.keysym.sym == SDLK_w) event.key.keysym.sym = SDLK_UP;
+                      if(event.key.keysym.sym == SDLK_s) event.key.keysym.sym = SDLK_DOWN;
                         switch (event.key.keysym.sym) {
                             case SDLK_RIGHT:
                             case SDLK_LEFT:
@@ -436,6 +440,10 @@ FRAMEWORK_API int run(Framework* framework)
                         }
                         break;
 					case SDL_KEYDOWN:
+                      if(event.key.keysym.sym == SDLK_a) event.key.keysym.sym = SDLK_LEFT;
+                      if(event.key.keysym.sym == SDLK_d) event.key.keysym.sym = SDLK_RIGHT;
+                      if(event.key.keysym.sym == SDLK_w) event.key.keysym.sym = SDLK_UP;
+                      if(event.key.keysym.sym == SDLK_s) event.key.keysym.sym = SDLK_DOWN;
 						switch (event.key.keysym.sym) {
 						case SDLK_RIGHT:
 						case SDLK_LEFT:

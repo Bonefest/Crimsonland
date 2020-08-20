@@ -12,7 +12,7 @@ enum class MessageType {
   BULLET_COLLISION,
   ZOMBIE_DEAD,
   SPAWN_ZOMBIE,
-  SPAWN_BLOOD_EFFECT,
+  SPAWN_EFFECT,
   WEAPON_PICKUP,
   POWERUP_PICKUP,
   CUSTOM_MESSAGE,
@@ -26,6 +26,14 @@ enum class MessageType {
 };
 
 
+enum class EffectType {
+  BLOOD_1,
+  BLOOD_2,
+  BLOOD_3,
+  BLOOD_RANDOM,
+  STEPS
+};
+
 class Registry;
 
 struct Message {
@@ -35,37 +43,48 @@ struct Message {
   union {
 
     struct {
-      union {
-        Bullet* blt;
-        Zombie* zombie;
-      } bullet_collision_info;
+      Bullet* blt;
+      Zombie* zombie;
+    } bullet_collision_info;
 
-      union {
+    struct {
 
-        Zombie* zombie;
+      Zombie* zombie;
 
-      } dead_zombie_info;
+    } dead_zombie_info;
 
-      union {
-        real x;
-        real y;
-        int bloodType;
-      } spawn_blood_info;
+    struct {
+      real x;
+      real y;
+      int bloodType;
+    } spawn_blood_info;
 
-      union {
-        WeaponType weaponType;
-      } weapon_info;
+    struct {
+      WeaponType weaponType;
+    } weapon_info;
 
-      union {
-        Registry* registry;
-        Entity entity;
-      } entity_info;
+    struct {
+      Registry* registry;
+      Entity entity;
+    } entity_info;
 
-      void* custom_data;
+    struct {
 
-    };
+      EffectType type;
+      real x;
+      real y;
+      real scale;
+      real angle;
+      real lifetime;
+
+      bool fadeOut;
+
+    } effect_info;
+
+    void* custom_data;
 
   };
+
 };
 
 void addNewMessage(Message message);
