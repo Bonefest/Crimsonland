@@ -41,6 +41,7 @@ struct vec2 {
 real degToRad(real deg);
 real radToDeg(real rad);
 vec2 radToVec(real rad);
+vec2 degToVec(real deg);
 real vecToRad(const vec2& vec);
 
 #endif

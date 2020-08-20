@@ -30,6 +30,8 @@ public:
                                  &PlayerSystem::onPowerupPickup,
                                  this);
 
+    m_lastFootprintElapsedTime = 0.0f;
+
     Entity player = context.registry->createEntity();
 
     Model* model = new Model("player_walk");
@@ -59,7 +61,7 @@ public:
     physics->size = 32.0f;
 
     // TODO(mizofix): change damping based on current tile
-    physics->damping = 0.98f;
+    physics->damping = 1.0f;
 
     context.registry->addComponent(player, model);
     context.registry->addComponent(player, transf);
@@ -84,35 +86,27 @@ public:
     Model* model = registry->getComponent<Model>(player, ComponentID::Model);
     Physics* physics = registry->getComponent<Physics>(player, ComponentID::Physics);
     Transformation* transf = registry->getComponent<Transformation>(player, ComponentID::Transformation);
-    // TODO(mizofix): player controll
+    transf->angle = getPlayerViewDirection();
+
+    vec2 heading = degToVec(transf->angle);
+    vec2 side = heading.perp();
 
     vec2 acceleration;
     if(isKeyPressed(FRKey::LEFT)) {
-      acceleration -= vec2(100.0f, 0.0f);
+      acceleration -= side * context.data.maxPlayerSpeed;
     }
     if(isKeyPressed(FRKey::RIGHT)) {
-      acceleration += vec2(100.0f, 0.0f);
+      acceleration += side * context.data.maxPlayerSpeed;
     }
     if(isKeyPressed(FRKey::UP)) {
-      acceleration -= vec2(0.0f, 100.0f);
+      acceleration += heading * context.data.maxPlayerSpeed;
     }
     if(isKeyPressed(FRKey::DOWN)) {
-      acceleration += vec2(0.0f, 100.0f);
-
-      Message msg;
-      msg.type = int(MessageType::SPAWN_EFFECT);
-      msg.effect_info.type = EffectType::BLOOD_1;
-      msg.effect_info.x = transf->position.x;
-      msg.effect_info.y = transf->position.y;
-      msg.effect_info.scale = 1.0f;
-      msg.effect_info.angle = 0.0f;
-      msg.effect_info.lifetime = 0.06;
-      msg.effect_info.fadeOut = false;
-
-      notify(msg);
+      acceleration -= heading * context.data.maxPlayerSpeed;
     }
 
     physics->acceleration = acceleration;
+    info("%f %f\n", transf->position.x, transf->position.y);
 
     if(physics->acceleration.length() < 0.01f) {
       physics->velocity = vec2();
@@ -132,9 +126,20 @@ public:
 
     setCameraPosition(round(transf->position.x), round(transf->position.y));
 
-    transf->angle = getPlayerViewDirection();
+
 
     updateAnimation(model->sprite, deltaTime);
+    if(!physics->idling) {
+      m_lastFootprintElapsedTime += deltaTime;
+      if(m_lastFootprintElapsedTime > 0.35 && !physics->idling) {
+        m_lastFootprintElapsedTime = 0.0f;
+
+        generateFootprint(transf->position, transf->angle);
+
+      }
+    } else {
+      m_lastFootprintElapsedTime = 0.0f;
+    }
 
   }
 
@@ -161,6 +166,21 @@ public:
   }
 
 private:
+  void generateFootprint(vec2 position, real angle) {
+    Message msg;
+    msg.type = int(MessageType::SPAWN_EFFECT);
+    msg.effect_info.type = EffectType::FOOTPRINT;
+    msg.effect_info.x = position.x;
+    msg.effect_info.y = position.y;
+    msg.effect_info.scale = 1.0f;
+    msg.effect_info.angle = angle;
+    msg.effect_info.lifetime = 5.0f;
+    msg.effect_info.fadeOut = true;
+
+    notify(msg);
+
+  }
+
   real getPlayerViewDirection() {
     int cursorX, cursorY;
     getCursorPos(&cursorX, &cursorY);
@@ -184,6 +204,7 @@ private:
   }
 
   Bitfield m_playerBitfield;
+  real m_lastFootprintElapsedTime;
 };
 
 class ZombieRenderingSystem: public System {
@@ -292,7 +313,10 @@ public:
 
   virtual void draw(ECSContext& context) {
     for(auto& effect: m_effects) {
-      int alpha = int((1.0f - effect.elapsedTime / effect.lifetime) * 255);
+      int alpha = 255;
+      if(effect.fadeOut) {
+        alpha = int((1.0f - effect.elapsedTime / effect.lifetime) * 255);
+      }
       drawSprite(effect.sprite, round(effect.position.x), round(effect.position.y), alpha,
                  effect.scale, effect.angle);
     }
@@ -315,7 +339,7 @@ public:
     case EffectType::BLOOD_1: effectName = "blood_1"; break;
     case EffectType::BLOOD_2: effectName = "blood_2"; break;
     case EffectType::BLOOD_3: effectName = "blood_3"; break;
-    case EffectType::STEPS: effectName = "steps"; break;
+    case EffectType::FOOTPRINT: effectName = "footprint"; break;
 
     default: break;
     }

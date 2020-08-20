@@ -28,9 +28,9 @@ public:
       if(m_elapsedTime >= m_frameDuration) {
         m_currentX += m_frameWidth;
 
-        if(m_currentX == m_endX) {
+        if(m_currentX >= m_endX) {
 
-          if(m_currentY != m_endY) {
+          if(m_currentY < m_endY) {
             m_currentX = m_startX;
             m_currentY += m_frameHeight;
           } else {

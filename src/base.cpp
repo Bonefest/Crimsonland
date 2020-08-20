@@ -9,6 +9,7 @@
 CrimsonlandFramework::CrimsonlandFramework(int argc, char** commands): m_lastTime(0.0f) {
   m_worldData = parseCommands(argc, commands);
   m_worldData.maxEffectsNumber = 10;
+  m_worldData.maxPlayerSpeed = 100.0f;
 
   info("-------------------------\n");
   info("final world data values are:\n");
@@ -60,9 +61,9 @@ void CrimsonlandFramework::initECS() {
   m_context.data = m_worldData;
 
   m_systemManager.addSystem(m_context, new PhysicsIntegrationSystem());
+  m_systemManager.addSystem(m_context, new EffectsSystem());
   m_systemManager.addSystem(m_context, new PlayerSystem());
   m_systemManager.addSystem(m_context, new ZombieRenderingSystem());
-  m_systemManager.addSystem(m_context, new EffectsSystem());
 
 }
 
@@ -85,11 +86,6 @@ void CrimsonlandFramework::draw() {
   setTextureAsTarget(m_screenTexture);
 
   drawTestBackground();
-  SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-  for(int x = 0; x < m_worldData.windowWidth; x += 20) {
-    SDL_RenderDrawLine(renderer, x, 0, x, m_worldData.windowHeight);
-  }
-  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 
   m_systemManager.drawSystems(m_context);
 }

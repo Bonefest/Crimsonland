@@ -81,6 +81,10 @@ vec2 radToVec(real rad) {
   return vec2(cos(rad), sin(rad));
 }
 
+vec2 degToVec(real deg) {
+  return radToVec(degToRad(deg));
+}
+
 real vecToRad(const vec2& vec) {
   return atan2(vec.y, vec.x);
 }
