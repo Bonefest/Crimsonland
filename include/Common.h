@@ -1,6 +1,8 @@
 #ifndef COMMON_H_INCLUDED
 #define COMMON_H_INCLUDED
 
+#include <stdint.h>
+
 #ifndef NDEBUG
 #define info(...) fprintf(stderr, __VA_ARGS__)
 #else
@@ -20,7 +22,8 @@ struct WorldData {
   real mapWidth;
   real mapHeight;
 
-
 };
+
+using Entity = uint32_t;
 
 #endif

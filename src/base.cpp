@@ -4,7 +4,7 @@
 
 #include <GL/gl.h>
 
-
+#include "ecs/Registry.h"
 
 CrimsonlandFramework::CrimsonlandFramework(int argc, char** commands): m_lastTime(0.0f) {
   m_worldData = parseCommands(argc, commands);
@@ -41,6 +41,8 @@ bool CrimsonlandFramework::Init() {
   if(!loadAnimations("data/zombie_animations.json")) {
     return false;
   }
+
+  Bitfield bitfield = buildBitfield(3, 2, 5, 1, 6, 3, 9);
 
   m_screenTexture = createTexture(m_worldData.windowWidth, m_worldData.windowHeight);
 
@@ -164,22 +166,22 @@ void CrimsonlandFramework::collisionSystem() {
 
 void CrimsonlandFramework::penetrationResolution() {
 
-  // TODO(mizofix): more than one iteration
-  // NOTE(mizofix): warning! extremely slow function
-  for(auto entityAIt = m_entities.begin(); entityAIt != m_entities.end(); entityAIt++) {
-    for(auto entityBIt = entityAIt + 1; entityBIt != m_entities.end(); entityBIt++) {
-      real totalSize = (*entityAIt)->getSize() + (*entityBIt)->getSize();
-      real distance = (*entityAIt)->getPosition().distance((*entityBIt)->getPosition());
+  // // TODO(mizofix): more than one iteration
+  // // NOTE(mizofix): warning! extremely slow function
+  // for(auto entityAIt = m_entities.begin(); entityAIt != m_entities.end(); entityAIt++) {
+  //   for(auto entityBIt = entityAIt + 1; entityBIt != m_entities.end(); entityBIt++) {
+  //     real totalSize = (*entityAIt)->getSize() + (*entityBIt)->getSize();
+  //     real distance = (*entityAIt)->getPosition().distance((*entityBIt)->getPosition());
 
-      if(distance < totalSize) {
-        vec2 direction = ((*entityBIt)->getPosition() - (*entityAIt)->getPosition());
-        direction.normalize();
-        real delta = totalSize - distance;
+  //     if(distance < totalSize) {
+  //       vec2 direction = ((*entityBIt)->getPosition() - (*entityAIt)->getPosition());
+  //       direction.normalize();
+  //       real delta = totalSize - distance;
 
-        (*entityAIt)->setPosition((*entityAIt)->getPosition() - direction * delta * 0.5f);
-        (*entityBIt)->setPosition((*entityBIt)->getPosition() + direction * delta * 0.5f);
-      }
+  //       (*entityAIt)->setPosition((*entityAIt)->getPosition() - direction * delta * 0.5f);
+  //       (*entityBIt)->setPosition((*entityBIt)->getPosition() + direction * delta * 0.5f);
+  //     }
 
-    }
-  }
+  //   }
+  // }
 }

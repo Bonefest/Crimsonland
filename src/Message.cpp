@@ -8,12 +8,6 @@ static std::unordered_map<int, std::list<MessageFunction>> g_subscribers;
 void addNewMessage(Message message) {
   g_messageContainer.push_back(message);
 
-  auto subscribersIt = g_subscribers.find(message.type);
-  if(subscribersIt != g_subscribers.end()) {
-    for(auto subscriber: subscribersIt->second) {
-      subscriber(message);
-    }
-  }
 
 }
 
@@ -43,4 +37,13 @@ bool hasMessage() {
 
 void subscribeToMessage(int message, MessageFunction function) {
   g_subscribers[message].push_back(function);
+}
+
+void notify(Message message) {
+  auto subscribersIt = g_subscribers.find(message.type);
+  if(subscribersIt != g_subscribers.end()) {
+    for(auto subscriber: subscribersIt->second) {
+      subscriber(message);
+    }
+  }
 }

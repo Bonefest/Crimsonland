@@ -1,6 +1,7 @@
 #ifndef MESSAGE_H_INCLUDED
 #define MESSAGE_H_INCLUDED
 
+#include "Common.h"
 #include "Math.h"
 #include <functional>
 
@@ -14,6 +15,12 @@ enum class MessageType {
   SPAWN_BLOOD_EFFECT,
   WEAPON_PICKUP,
   CUSTOM_MESSAGE,
+
+  // ECS
+
+  ECS_ENTITY_DELETE,
+  ECS_ENTITY_CREATED,
+
   COUNT
 };
 
@@ -25,7 +32,11 @@ enum class WeaponType {
   CHAINGUN
 };
 
+class Registry;
+
 struct Message {
+  Message(int inType = 0): type(inType) { }
+
   int type;
   union {
 
@@ -49,7 +60,12 @@ struct Message {
 
       union {
         WeaponType weaponType;
-      };
+      } weapon_info;
+
+      union {
+        Registry* registry;
+        Entity entity;
+      } entity_info;
 
       void* custom_data;
 
@@ -62,6 +78,8 @@ void addNewMessage(Message message);
 bool pollMessage(Message& message);
 bool peekMessage(Message& message);
 bool hasMessage();
+
+void notify(Message message);
 
 using MessageFunction = std::function<void(Message)>;
 void subscribeToMessage(int type, MessageFunction function);

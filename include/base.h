@@ -16,6 +16,9 @@
 #include "Math.h"
 #include "Message.h"
 
+#include <array>
+#include <unordered_map>
+
 class Object {
 public:
   // NOTE(mizofix): z-order for drawing graph
@@ -120,7 +123,7 @@ protected:
   bool m_idle;
 };
 
-class Entity: public Object {
+class EntityS: public Object {
 public:
 
   void setMaxHealth(real maxHealth) {
@@ -143,7 +146,7 @@ struct WeaponData {
   int maxAmmo;
 };
 
-class Player: public Entity {
+class Player: public EntityS {
 public:
 
   Player() {
@@ -222,7 +225,7 @@ private:
 
 };
 
-class Zombie : public Entity {
+class Zombie : public EntityS {
 public:
 
   void draw(bool relativeToCamera) {
