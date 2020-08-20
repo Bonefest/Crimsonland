@@ -50,6 +50,7 @@ public:
 private:
 
   void initECS();
+  void initPlants();
 
   void update();
   void draw();
@@ -59,7 +60,9 @@ private:
   void collisionSystem();
   void penetrationResolution();
 
-  void createZombie();
+  void drawPlants(std::vector<std::pair<Sprite*, vec2>>& plants);
+
+  void clearPlants();
 
   WorldData m_worldData;
 
@@ -67,8 +70,9 @@ private:
   ECSContext m_context;
   SystemManager m_systemManager;
 
-  std::vector<Entity*> m_entities;
-  std::vector<Zombie*> m_zombies;
+  Sprite* m_background;
+  std::vector<std::pair<Sprite*, vec2>> m_bushes;
+  std::vector<std::pair<Sprite*, vec2>> m_trees;
 
   Texture* m_screenTexture;
 

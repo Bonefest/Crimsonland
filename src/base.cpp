@@ -40,10 +40,12 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
-  if(!loadAnimations("data/animations.json")) {
+  if(!loadAnimations("data/animations.json") || !loadAnimations("data/trees/trees.json")) {
     return false;
   }
 
+  m_background = createSprite("grass");
+  initPlants();
 
   initECS();
 
@@ -67,6 +69,30 @@ void CrimsonlandFramework::initECS() {
 
 }
 
+void CrimsonlandFramework::initPlants() {
+
+  int maximalCount = 40;
+  for(int i = 0; i < 40; ++i) {
+    int rnd = rand() % 100;
+
+    char name[32];
+    int plantNumber = rand() % 46 + 1;
+    sprintf(name, "tree_%d", plantNumber);
+
+    Sprite* plantSprite = createSprite(name);
+
+    vec2 position(float(rand() % int(m_worldData.mapWidth * 1.25f)) - m_worldData.mapWidth * 0.75f,
+                  float(rand() % int(m_worldData.mapHeight * 1.25f)) - m_worldData.mapHeight * 0.75f
+                  );
+
+    if(rnd < 50) {
+      m_bushes.emplace_back(plantSprite, position);
+    } else {
+      m_trees.emplace_back(plantSprite, position);
+    }
+  }
+
+}
 
 bool CrimsonlandFramework::Tick() {
 
@@ -78,6 +104,14 @@ bool CrimsonlandFramework::Tick() {
   return false;
 }
 
+
+void CrimsonlandFramework::updateTimer() {
+  float time = float(getTickCount()) / 1000.0f;
+  m_deltaTime = time - m_lastTime;
+  m_lastTime = time;
+}
+
+
 void CrimsonlandFramework::update() {
   m_systemManager.updateSystems(m_context, m_deltaTime);
 }
@@ -86,14 +120,23 @@ void CrimsonlandFramework::draw() {
   setTextureAsTarget(m_screenTexture);
 
   drawTestBackground();
+  drawSprite(m_background, int(m_worldData.windowWidth * 0.5f),
+             int(m_worldData.windowHeight * 0.5f),
+             255,
+             1.0f,
+             0.0f,
+             false);
+
+  drawPlants(m_bushes);
 
   m_systemManager.drawSystems(m_context);
+  drawPlants(m_trees);
 }
 
-void CrimsonlandFramework::updateTimer() {
-  float time = float(getTickCount()) / 1000.0f;
-  m_deltaTime = time - m_lastTime;
-  m_lastTime = time;
+void CrimsonlandFramework::drawPlants(std::vector<std::pair<Sprite*, vec2>>& plants) {
+  for(auto plant: plants) {
+    drawSprite(plant.first, round(plant.second.x), round(plant.second.y));
+  }
 }
 
 void CrimsonlandFramework::drawToScreen() {
@@ -139,6 +182,7 @@ void CrimsonlandFramework::onKeyPressed(FRKey k) {
 }
 
 void CrimsonlandFramework::Close() {
+  destroySprite(m_background);
   destroyTexture(m_screenTexture);
 }
 

@@ -31,6 +31,7 @@ enum class EffectType {
   BLOOD_2,
   BLOOD_3,
   BLOOD_RANDOM,
+  BLOODPRINT,
   FOOTPRINT
 };
 

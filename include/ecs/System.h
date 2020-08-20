@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include "Message.h"
+#include "Assert.h"
 #include "ecs/Registry.h"
 
 struct ECSContext {
@@ -18,6 +19,7 @@ public:
   virtual void update(ECSContext& context, real deltaTime) { }
   virtual void draw(ECSContext& context) { }
 };
+
 
 class PlayerSystem: public System {
 public:
@@ -200,7 +202,6 @@ private:
     Assert(!players.empty());
 
     return players.front();
-
   }
 
   Bitfield m_playerBitfield;
@@ -264,6 +265,19 @@ public:
 
         physics->velocity = newVelocity;
         transf->position += physics->velocity * deltaTime;
+        if(transf->position.x > context.data.mapWidth * 0.5f) {
+          transf->position.x = context.data.mapWidth * 0.5f;
+        }
+        else if(transf->position.x < -context.data.mapWidth * 0.5f) {
+          transf->position.x = -context.data.mapWidth * 0.5f;
+        }
+
+        if(transf->position.y > context.data.mapHeight * 0.5f) {
+          transf->position.y = context.data.mapHeight * 0.5f;
+        }
+        else if(transf->position.y < -context.data.mapHeight * 0.5f) {
+          transf->position.y = -context.data.mapHeight * 0.5f;
+         }
       }
 
       physics->acceleration = vec2();

@@ -64,8 +64,13 @@ void main() {
   float k = 0.2;
   float lagLineDist = abs(texturePosition.y - lineVal);
   float maxDist = 0.02 + random(vec2(time * 0.3, time * 0.2)) * 0.025f;
+
+  bool useGray = true;
   if(lagLineDist < maxDist) {
     k = 0.5;
+    if(random(vec2(normalizedScreenPos.x, normalizedScreenPos.y)) > 0.5) {
+      useGray = false;
+    }
   } else if(lagLineDist < maxDist + 0.01) {
     k = 0.5 - 0.25 * (maxDist + 0.01 - lagLineDist) / 0.01;
   }
@@ -94,9 +99,11 @@ void main() {
 
   vec4 color = texture2D(text, vec2(x + rnd * distortionKX, y + rnd * distortionKY)) + gray;
 
-  float g = 0.3 * color.r + 0.59 * color.g + 0.11 * color.b;
-
-  gl_FragColor = vec4(g, g, g, 1.0);
-
+  if(useGray) {
+    float g = 0.3 * color.r + 0.59 * color.g + 0.11 * color.b;
+    gl_FragColor = vec4(g, g, g, 1.0);
+  } else {
+    gl_FragColor = color;
+  }
   //gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

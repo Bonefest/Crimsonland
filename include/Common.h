@@ -30,7 +30,8 @@ struct WorldData {
 };
 
 enum class WeaponType {
-  FISTS,
+    FISTS,
+    KNIFE,
     PISTOL,
     SHOTGUN,
     RIFLE,
@@ -42,6 +43,9 @@ struct WeaponData {
   WeaponType type;
   int        maxAmmo;
   int        ammo;
+
+  real shootDuration;
+  real attackDuration;
 };
 
 

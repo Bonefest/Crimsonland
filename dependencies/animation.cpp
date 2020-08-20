@@ -3,7 +3,7 @@ class Animation {
 public:
 
   Animation(): texture(nullptr),
-               frozen(false), repeat(false),
+               frozen(false), repeat(false), scale(1.0f),
                m_startX(0), m_startY(0),
                m_currentX(0), m_currentY(0),
                m_endX(0), m_endY(0),
@@ -12,7 +12,7 @@ public:
 
   Animation(int startX, int startY, int endX, int endY,
             int frameWidth, int frameHeight,
-            float frameDuration): texture(nullptr), frozen(false), repeat(false),
+            float frameDuration): texture(nullptr), frozen(false), repeat(false), scale(1.0f),
                                   m_startX(startX), m_startY(startY),
                                   m_currentX(startX), m_currentY(startY),
                                   m_endX(endX), m_endY(endY),
@@ -77,6 +77,8 @@ public:
   SDL_Texture* texture;
   bool frozen;
   bool repeat;
+
+  float scale;
 
 private:
   int m_startX, m_startY;

@@ -41,6 +41,7 @@ FRAMEWORK_API void updateAnimation(Sprite* s, float deltaTime);
 FRAMEWORK_API void setFrozenAnimation(Sprite* s, bool frozen);
 FRAMEWORK_API void resetAnimation(Sprite* s);
 FRAMEWORK_API void setAnimationFrameDuration(Sprite* s, float duration);
+FRAMEWORK_API bool isAnimationFinished(Sprite* s);
 
 FRAMEWORK_API bool loadAnimations(const std::string& path);
 
@@ -83,6 +84,9 @@ enum class FRMouseButton {
 	RIGHT,
 	COUNT
 };
+
+FRAMEWORK_API bool isButtonPressed(FRMouseButton button);
+
 
 class FRAMEWORK_API Framework {
 public:

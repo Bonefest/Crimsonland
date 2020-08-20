@@ -88,9 +88,12 @@ static bool parseAnimation(nlohmann::json& parser, Animation& animation) {
   float duration = parser["duration"];
   bool repeat = parser["repeat"];
 
+  float scale = parser.value("scale", 1.0f);
+
   Animation result(startX, startY, endX, endY, width, height, duration);
   result.texture = texture;
   result.repeat = repeat;
+  result.scale = scale;
 
   animation = result;
   return true;
@@ -189,14 +192,14 @@ FRAMEWORK_API void drawSprite(Sprite* sprite, int x, int y, int alpha,
     SDL_Rect src = sprite->animation.getSourceRect();
 
 
-    dst.w = int(round(float(src.w) * scale));
-    dst.h = int(round(float(src.h) * scale));
+    dst.w = int(round(float(src.w) * scale * sprite->animation.scale));
+    dst.h = int(round(float(src.h) * scale * sprite->animation.scale));
 
     dst.x -= int(sprite->anchorX * float(dst.w));
     dst.y -= int(sprite->anchorY * float(dst.h));
 
-    if(dst.x < sprite->w || dst.y < sprite->h ||
-       dst.x > g_width + sprite->w || dst.y > g_height + sprite->h) {
+    if(dst.x < -dst.w || dst.y < -dst.h ||
+       dst.x > g_width + dst.w || dst.y > g_height + dst.h) {
       return;
     }
 
@@ -235,6 +238,10 @@ FRAMEWORK_API void resetAnimation(Sprite* sprite) {
 
 FRAMEWORK_API void setAnimationFrameDuration(Sprite* sprite, float duration) {
   sprite->animation.setFrameDuration(duration);
+}
+
+FRAMEWORK_API bool isAnimationFinished(Sprite* sprite) {
+  return sprite->animation.isFinished();
 }
 
 
@@ -299,10 +306,16 @@ FRAMEWORK_API void setDefaultRenderTarget() {
 
 
 bool GKeyState[(int)FRKey::COUNT] = {};
+bool GButtonState[(int)FRMouseButton::COUNT] = {};
 
 FRAMEWORK_API bool isKeyPressed(FRKey key) {
     return GKeyState[(int)key];
 }
+
+FRAMEWORK_API bool isButtonPressed(FRMouseButton button) {
+  GButtonState[(int)button];
+}
+
 
 FRAMEWORK_API int run(Framework* framework)
 {
@@ -465,12 +478,14 @@ FRAMEWORK_API int run(Framework* framework)
 						break;
                     case SDL_MOUSEBUTTONDOWN:
 						if (event.button.button <= SDL_BUTTON_RIGHT) {
-							GFramework->onMouseButtonClick((FRMouseButton)(event.button.button - SDL_BUTTON_LEFT), false);
+                          GButtonState[int(event.button.button)] = true;
+                          GFramework->onMouseButtonClick((FRMouseButton)(event.button.button - SDL_BUTTON_LEFT), false);
 						}
 						break;
                     case SDL_MOUSEBUTTONUP:
 						if (event.button.button <= SDL_BUTTON_RIGHT) {
-							GFramework->onMouseButtonClick((FRMouseButton)(event.button.button - SDL_BUTTON_LEFT), true);
+                          GButtonState[int(event.button.button)] = false;
+                          GFramework->onMouseButtonClick((FRMouseButton)(event.button.button - SDL_BUTTON_LEFT), true);
 						}
                         break;
 					case SDL_MOUSEMOTION:
