@@ -23,7 +23,9 @@ void PlayerStateController::init(ECSContext& context, Entity player) {
   //m_states[int(PlayerState::Reload)] = new PlayerReload();
 
   for(int i = 0; i < int(PlayerState::COUNT); ++i) {
-    m_states[i]->setOwner(this);
+    if(m_states[i]) {
+      m_states[i]->setOwner(this);
+    }
   }
 
   setState(context, player, PlayerState::Idle);
@@ -41,6 +43,6 @@ void PlayerStateController::setState(ECSContext& context, Entity player, PlayerS
   }
 
   m_currentState = m_states[int(state)];
-  m_currentState->onExit(context, player);
+  m_currentState->onEnter(context, player);
 
 }

@@ -87,17 +87,6 @@ struct Attributes: Component {
   int level;
 };
 
-struct Player: Component {
-
-  ComponentID getID() {
-    return ComponentID::Player;
-  }
-
-  std::size_t currentWeaponIndex;
-  std::vector<WeaponData> weapons;
-
-};
-
 struct Physics: Component {
 
   Physics(): mass(1.0f), damping(1.0f) { }
@@ -130,6 +119,31 @@ struct Zombie: Component {
   bool isDead;
 
 };
+
+
+#include "PlayerStateController.h"
+
+class PlayerStateController;
+
+struct Player: Component {
+
+   Player(): stateController(nullptr) { }
+
+  ~Player() {
+    if(stateController != nullptr) {
+      delete stateController;
+    }
+  }
+
+  ComponentID getID() {
+    return ComponentID::Player;
+  }
+
+  std::size_t currentWeaponIndex;
+  std::vector<WeaponData> weapons;
+  PlayerStateController* stateController;
+};
+
 
 Component* componentFactory(ComponentID component);
 

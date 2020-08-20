@@ -23,6 +23,7 @@ void PlayerIdle::onEnter(ECSContext& context, Entity player) {
     setAnimation(model->sprite, "rifle_idle");
   }
 
+  setFrozenAnimation(model->sprite, false);
 }
 
 void PlayerIdle::update(ECSContext& context, Entity player, real deltaTime) {

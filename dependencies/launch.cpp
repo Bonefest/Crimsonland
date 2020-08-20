@@ -306,14 +306,14 @@ FRAMEWORK_API void setDefaultRenderTarget() {
 
 
 bool GKeyState[(int)FRKey::COUNT] = {};
-bool GButtonState[(int)FRMouseButton::COUNT] = {};
 
 FRAMEWORK_API bool isKeyPressed(FRKey key) {
-    return GKeyState[(int)key];
+  return GKeyState[(int)key];
 }
 
 FRAMEWORK_API bool isButtonPressed(FRMouseButton button) {
-  GButtonState[(int)button];
+  SDL_PumpEvents();
+  return SDL_GetGlobalMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT);
 }
 
 
@@ -478,13 +478,11 @@ FRAMEWORK_API int run(Framework* framework)
 						break;
                     case SDL_MOUSEBUTTONDOWN:
 						if (event.button.button <= SDL_BUTTON_RIGHT) {
-                          GButtonState[int(event.button.button)] = true;
                           GFramework->onMouseButtonClick((FRMouseButton)(event.button.button - SDL_BUTTON_LEFT), false);
 						}
 						break;
                     case SDL_MOUSEBUTTONUP:
 						if (event.button.button <= SDL_BUTTON_RIGHT) {
-                          GButtonState[int(event.button.button)] = false;
                           GFramework->onMouseButtonClick((FRMouseButton)(event.button.button - SDL_BUTTON_LEFT), true);
 						}
                         break;

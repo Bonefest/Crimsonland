@@ -1,16 +1,20 @@
 #ifndef PLAYER_STATES_H_INCLUDED
 #define PLAYER_STATES_H_INCLUDED
 
-#include "ecs/System.h"
 
 class PlayerStateController;
 
 enum PlayerState {
-                  Idle, Move, MeleeAttack, Shoot, Reload, COUNT
+  Idle, Move, MeleeAttack, Shoot, Reload, COUNT
 };
 
-#include "PlayerStateController.h"
 
+#include "ecs/System.h"
+
+#include "PlayerStateController.h"
+#include "ecs/Components.h"
+
+class Player;
 
 class PlayerStateBase {
 public:
@@ -48,6 +52,14 @@ public:
 
 private:
   bool hasAmmo(Player* player);
+};
+
+class PlayerAttack: public PlayerStateBase {
+public:
+
+  virtual void onEnter(ECSContext& context, Entity player);
+  virtual void update(ECSContext& context, Entity player, real deltaTime);
+
 
 };
 
