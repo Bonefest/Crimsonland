@@ -18,7 +18,7 @@ PlayerStateController::~PlayerStateController() {
 void PlayerStateController::init(ECSContext& context, Entity player) {
   m_states[int(PlayerState::Idle)] = new PlayerIdle();
   m_states[int(PlayerState::Move)] = new PlayerMove();
-  //m_states[int(PlayerState::MeleeAttack)] = new PlayerAttack();
+  m_states[int(PlayerState::MeleeAttack)] = new PlayerAttack();
   m_states[int(PlayerState::Shoot)] = new PlayerShoot();
   //m_states[int(PlayerState::Reload)] = new PlayerReload();
 

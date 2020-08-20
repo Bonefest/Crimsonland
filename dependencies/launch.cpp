@@ -220,7 +220,7 @@ FRAMEWORK_API void setSpriteAnchorPoint(Sprite* sprite, float x, float y) {
 FRAMEWORK_API void setAnimation(Sprite* sprite, const std::string& name, bool repeat) {
   if(animationIsLoaded(name)) {
     sprite->animation = loadedAnimations[name];
-    sprite->animation.repeat = repeat;
+    //sprite->animation.repeat = repeat;
   }
 }
 
@@ -313,7 +313,7 @@ FRAMEWORK_API bool isKeyPressed(FRKey key) {
 
 FRAMEWORK_API bool isButtonPressed(FRMouseButton button) {
   SDL_PumpEvents();
-  return SDL_GetGlobalMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT);
+  return SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(int(button) + SDL_BUTTON_LEFT);
 }
 
 

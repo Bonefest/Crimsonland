@@ -169,3 +169,48 @@ void PlayerShoot::update(ECSContext& context, Entity player, real deltaTime) {
 bool PlayerShoot::hasAmmo(Player* player) {
   return player->weapons[player->currentWeaponIndex].ammo >= 0;
 }
+
+void PlayerAttack::onEnter(ECSContext& context, Entity player) {
+  Model* model = context.registry->getComponent<Model>(player, ComponentID::Model);
+  Player* playerComponent = context.registry->getComponent<Player>(player, ComponentID::Player);
+
+  WeaponData currentWeapon = playerComponent->weapons[playerComponent->currentWeaponIndex];
+
+  if(currentWeapon.type == WeaponType::KNIFE) {
+    setAnimation(model->sprite, "knife_attack");
+  }
+  else if(currentWeapon.type == WeaponType::PISTOL) {
+    setAnimation(model->sprite, "pistol_attack");
+  }
+  else if(currentWeapon.type == WeaponType::SHOTGUN) {
+    setAnimation(model->sprite, "shotgun_attack");
+  }
+  else if(currentWeapon.type == WeaponType::RIFLE) {
+    setAnimation(model->sprite, "rifle_attack");
+  }
+}
+
+void PlayerAttack::update(ECSContext& context, Entity player, real deltaTime) {
+
+  Model* model = context.registry->getComponent<Model>(player, ComponentID::Model);
+  Player* playerComponent = context.registry->getComponent<Player>(player, ComponentID::Player);
+  Physics* physics = context.registry->getComponent<Physics>(player, ComponentID::Physics);
+
+  updateAnimation(model->sprite, deltaTime);
+  if(isAnimationFinished(model->sprite)) {
+
+    if(isButtonPressed(FRMouseButton::LEFT)) {
+      resetAnimation(model->sprite);
+    } else {
+
+      if(physics->idling) {
+        m_owner->setState(context, player, PlayerState::Idle);
+      } else {
+        m_owner->setState(context, player, PlayerState::Move);
+      }
+
+      return;
+    }
+  }
+
+}
