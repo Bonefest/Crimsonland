@@ -7,6 +7,10 @@
 #include "Common.h"
 #include "Assert.h"
 
+#include "ecs/Registry.h"
+#include "ecs/System.h"
+#include "ecs/SystemManager.h"
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
@@ -80,7 +84,7 @@ public:
   }
 
   virtual void draw(bool relativeToCamera = true) {
-    drawSprite(m_sprite, int(round(m_position.x)), int(round(m_position.y)), m_angle, relativeToCamera);
+    drawSprite(m_sprite, int(round(m_position.x)), int(round(m_position.y)), 128, 1.0f, m_angle, relativeToCamera);
   }
 
   virtual void onMove() { }
@@ -225,25 +229,25 @@ private:
 
 };
 
-class Zombie : public EntityS {
-public:
+// class Zombie : public EntityS {
+// public:
 
-  void draw(bool relativeToCamera) {
-    // TODO(mizofix): draw health bar
-    Object::draw(relativeToCamera);
+//   void draw(bool relativeToCamera) {
+//     // TODO(mizofix): draw health bar
+//     Object::draw(relativeToCamera);
 
-  }
+//   }
 
-};
+// };
 
-class ZombieController {
-public:
-  virtual void controll(Zombie* zombie) = 0;
-};
+// class ZombieController {
+// public:
+//   virtual void controll(Zombie* zombie) = 0;
+// };
 
-class AggressiveZombie: public ZombieController {
-  void controll(Zombie* zombie);
-};
+// class AggressiveZombie: public ZombieController {
+//   void controll(Zombie* zombie);
+// };
 
 
 class CrimsonlandFramework : public Framework {
@@ -272,6 +276,7 @@ public:
 
 private:
 
+  void initECS();
   void initPlayer();
 
   void update();
@@ -284,6 +289,10 @@ private:
 
   WorldData m_worldData;
 
+  Registry  m_registry;
+  ECSContext m_context;
+  SystemManager m_systemManager;
+
   std::vector<Entity*> m_entities;
   std::vector<Zombie*> m_zombies;
 
@@ -295,8 +304,6 @@ private:
 
   float m_lastTime;
   float m_deltaTime;
-
-  float m_angle;
 };
 
 

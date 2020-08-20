@@ -46,7 +46,7 @@ public:
   void removeComponent(Entity entity, ComponentID id);
   bool hasComponent(Entity entity, ComponentID id);
 
-  EntitiesContainer findEntities(Entity entity, Bitfield components);
+  EntitiesContainer findEntities(Bitfield components);
 
   template <typename T>
   T* getComponent(Entity entity, ComponentID id) {

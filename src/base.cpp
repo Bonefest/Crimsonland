@@ -42,7 +42,8 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
-  Bitfield bitfield = buildBitfield(3, 2, 5, 1, 6, 3, 9);
+
+  initECS();
 
   m_screenTexture = createTexture(m_worldData.windowWidth, m_worldData.windowHeight);
 
@@ -53,6 +54,13 @@ bool CrimsonlandFramework::Init() {
   initPlayer();
 
   return true;
+}
+
+void CrimsonlandFramework::initECS() {
+  m_context.registry = &m_registry;
+  m_context.data = m_worldData;
+
+  m_systemManager.addSystem(m_context, new ZombieRenderingSystem());
 }
 
 void CrimsonlandFramework::initPlayer() {

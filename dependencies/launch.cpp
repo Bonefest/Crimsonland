@@ -171,8 +171,8 @@ FRAMEWORK_API void getSpriteSize(Sprite* s, int& w, int &h)
 	h = s->h;
 }
 
-FRAMEWORK_API void drawSprite(Sprite* sprite, int x, int y,
-                              float angle, bool relativeToCamera)
+FRAMEWORK_API void drawSprite(Sprite* sprite, int x, int y, int alpha,
+                              float scale, float angle, bool relativeToCamera)
 {
 	SDL_assert(g_renderer);
 	SDL_assert(sprite);
@@ -188,18 +188,23 @@ FRAMEWORK_API void drawSprite(Sprite* sprite, int x, int y,
 
     SDL_Rect src = sprite->animation.getSourceRect();
 
-    dst.x -= int(sprite->anchorX * float(src.w));
-    dst.y -= int(sprite->anchorY * float(src.h));
+
+    dst.w = int(round(float(src.w) * scale));
+    dst.h = int(round(float(src.h) * scale));
+
+    dst.x -= int(sprite->anchorX * float(dst.w));
+    dst.y -= int(sprite->anchorY * float(dst.h));
 
     if(dst.x < sprite->w || dst.y < sprite->h ||
        dst.x > g_width + sprite->w || dst.y > g_height + sprite->h) {
       return;
     }
 
-    dst.w = src.w;
-    dst.h = src.h;
-
+    Uint8 previousAlpha;
+    SDL_GetTextureAlphaMod(sprite->animation.texture, &previousAlpha);
+    SDL_SetTextureAlphaMod(sprite->animation.texture, alpha);
 	SDL_RenderCopyEx(g_renderer, sprite->animation.texture, &src, &dst, angle, NULL, SDL_FLIP_NONE);
+    SDL_SetTextureAlphaMod(sprite->animation.texture, previousAlpha);
 }
 
 FRAMEWORK_API void setSpriteAnchorPoint(Sprite* sprite, float x, float y) {

@@ -103,7 +103,7 @@ bool Registry::hasComponent(Entity entity, ComponentID id) {
   return entityIt->second.first.isSet(int(id));
 }
 
-EntitiesContainer Registry::findEntities(Entity entity, Bitfield components) {
+EntitiesContainer Registry::findEntities(Bitfield components) {
   EntitiesContainer result;
   for(auto entityPair: m_entities) {
     if(entityPair.second.first.isSetBits(components)) {

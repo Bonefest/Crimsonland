@@ -22,6 +22,9 @@ struct WorldData {
   real mapWidth;
   real mapHeight;
 
+  real maxPlayerHealth;
+  real maxPlayerStamina;
+  real maxPlayerSpeed;
 };
 
 using Entity = uint32_t;

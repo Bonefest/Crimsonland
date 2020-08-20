@@ -14,6 +14,7 @@
 
 
 #include <string>
+#include <SDL2/SDL.h>
 
 // Bonus for any found bugs in the framework!
 
@@ -24,6 +25,8 @@ FRAMEWORK_API void convertToCameraCoordSystem(int& x, int& y);
 
 FRAMEWORK_API Sprite* createSprite(const std::string& path = "");
 FRAMEWORK_API void drawSprite(Sprite*, int x, int y,
+                              int alpha = 255,
+                              float scale = 1.0f,
                               float angle = 0.0f, bool relativeToCamera = true);
 
 // NOTE(mizofix): Anchor point coords should be in range [0, 1]
