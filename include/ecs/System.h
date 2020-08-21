@@ -24,6 +24,20 @@ public:
   virtual void draw(ECSContext& context) { }
 };
 
+// NOTE(mizofix): current trail system is frame rate dependent
+// to prevent some bugs we should consider to lock frame rate
+// or find a better way to draw trail (e.g via OpenGL)
+class TrailSystem: public System {
+public:
+
+  virtual void update(ECSContext& context, real deltaTime);
+  virtual void draw(ECSContext& context);
+private:
+  TrailParticle generateParticle(const vec2& targetVelocity,
+                                 const vec2& position,
+                                 real maxAngle,
+                                 real maxSpeed);
+};
 
 class PlayerSystem: public System {
 public:
@@ -44,6 +58,8 @@ private:
   real m_lastFootprintElapsedTime;
 
   int m_lastFrameMouseWheel;
+
+  std::list<SDL_Rect> m_trail;
 };
 
 class ZombieRenderingSystem: public System {

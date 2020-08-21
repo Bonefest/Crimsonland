@@ -2,6 +2,7 @@
 #define COMPONENT_H_INCLUDED
 
 #include <vector>
+#include <list>
 
 #include "Math.h"
 #include "Common.h"
@@ -15,6 +16,7 @@ enum class ComponentID {  Model,
                           Zombie,
                           Effect,
                           Bullet,
+                          Trail,
                           Weapon,
                           Powerup,
                           // HpBar ??
@@ -108,6 +110,40 @@ struct Physics: Component {
   // during last frame
   bool transition;
   bool idling;
+};
+
+struct TrailParticle {
+  vec2 position;
+  vec2 velocity;
+
+  real elapsedTime;
+};
+
+struct Trail: Component {
+
+  Trail(Entity inTarget, real inLifetime,
+        real inMaxRandAngle, real inMaxSpeed,
+        int inSize): target(inTarget),
+                     lifetime(inLifetime),
+                     maxRandomAngle(inMaxRandAngle),
+                     maxSpeed(inMaxSpeed),
+                     size(inSize){ }
+
+
+  ComponentID getID() {
+    return ComponentID::Trail;
+  }
+
+  Entity target;
+
+  real lifetime;
+  // NOTE(mizofix): this value is used to generate a random movement
+  // direction for each particle
+  real maxRandomAngle;
+  real maxSpeed;
+  int  size;
+
+  std::list<TrailParticle> particles;
 };
 
 struct Zombie: Component {

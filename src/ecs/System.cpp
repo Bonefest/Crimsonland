@@ -1,4 +1,95 @@
 #include "ecs/System.h"
+#include "Utils.h"
+
+void TrailSystem::update(ECSContext& context, real deltaTime) {
+  
+  Registry* registry = context.registry;
+
+  Bitfield desiredComponents = buildBitfield(ComponentID::Trail);
+  auto trails = registry->findEntities(desiredComponents);
+
+  std::list<Entity> proceededTrails;
+
+  for(auto trail: trails) {
+    Trail* trailComponent = registry->getComponent<Trail>(trail, ComponentID::Trail);
+
+    bool targetExists = registry->isEntityExists(trailComponent->target);
+    if(targetExists) {
+      Transformation* targetTransf = registry->getComponent<Transformation>(trailComponent->target, ComponentID::Transformation);
+
+      Physics* targetPhysics = registry->getComponent<Physics>(trailComponent->target, ComponentID::Physics);
+
+      Assert(targetTransf != nullptr);
+      Assert(targetPhysics != nullptr);
+
+      
+      trailComponent->particles.push_back(generateParticle(targetPhysics->velocity,
+                                                           targetTransf->position,
+                                                           trailComponent->maxRandomAngle,
+                                                           trailComponent->maxSpeed));
+      
+
+    }
+
+    for(auto particleIt = trailComponent->particles.begin();
+        particleIt != trailComponent->particles.end();) {
+
+      particleIt->elapsedTime += deltaTime;
+      if(particleIt->elapsedTime >= trailComponent->lifetime) {
+        particleIt = trailComponent->particles.erase(particleIt);
+      } else {
+        particleIt->position += particleIt->velocity * deltaTime;
+        particleIt++;
+      }
+
+    }
+
+    if(!targetExists && trailComponent->particles.empty()) {
+      proceededTrails.push_back(trail);
+    }
+
+  }
+
+  for(auto trail: proceededTrails) {
+    registry->destroyEntity(trail);
+  }
+
+}
+
+void TrailSystem::draw(ECSContext& context) {
+  Registry* registry = context.registry;
+
+  Bitfield desiredComponents = buildBitfield(ComponentID::Trail);
+  auto trails = registry->findEntities(desiredComponents);
+
+  for(auto trail: trails) {
+    Trail* trailComponent = registry->getComponent<Trail>(trail, ComponentID::Trail);
+
+    for(auto& particle: trailComponent->particles) {
+      int alpha = int(real(particle.elapsedTime / trailComponent->lifetime) * 255);
+
+      drawRect(round(particle.position.x),round(particle.position.y),
+               trailComponent->size, trailComponent->size,
+               128, 128, 128, alpha);
+    }
+  }  
+}
+
+TrailParticle TrailSystem::generateParticle(const vec2& targetVelocity, const vec2& position,
+                                            real maxAngle, real maxSpeed) {
+  TrailParticle newParticle;
+  newParticle.position = position;
+  newParticle.elapsedTime = 0.0f;
+
+  real targetDirectionAngle = vecToDeg(targetVelocity);
+
+  real particleDirectionAgle = targetDirectionAngle + randomReal(0.0f, maxAngle);
+  real particleSpeed = randomReal(0.0f, maxSpeed);
+
+  newParticle.velocity = degToVec(particleDirectionAgle) * particleSpeed;
+
+  return newParticle;
+}
 
 void PlayerSystem::init(ECSContext& context) {
   registerMethod<PlayerSystem>(int(MessageType::WEAPON_PICKUP),
@@ -140,6 +231,23 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
   }
 
   playerComponent->stateController->update(context, player, deltaTime);
+
+  // TEST
+
+  
+  if(m_trail.size() > 300) {
+    m_trail.pop_front();
+  }
+
+  SDL_Rect rect;
+  rect.x = int(transf->position.x);
+  rect.y = int(transf->position.y);
+  rect.w = 3;
+  rect.h = 3;
+
+  m_trail.push_back(rect);
+
+  
 }
 
 void PlayerSystem::draw(ECSContext& context) {
@@ -153,6 +261,13 @@ void PlayerSystem::draw(ECSContext& context) {
   drawSprite(model->sprite, round(transf->position.x), round(transf->position.y),
              model->alpha, round(transf->scale), transf->angle);
 
+  int totalSize = m_trail.size();
+  int counter = 0;
+  for(SDL_Rect& rect: m_trail) {
+    int alpha = int(255.0f * (1.0f -  float(counter) / float(totalSize)));
+    drawRect(rect.x, rect.y, rect.w, rect.h,
+             135, 135, 135, alpha, true);
+  }
 
 }
 

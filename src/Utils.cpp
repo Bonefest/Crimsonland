@@ -122,3 +122,7 @@ WorldData parseCommands(int argc, char** commands) {
 
   return result;
 }
+
+real randomReal(real start, real end) {
+  return drand48() * (end - start) + start;
+}

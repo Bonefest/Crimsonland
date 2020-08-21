@@ -18,5 +18,7 @@ inline int clamp(int value, int min, int max) {
 
 WorldData parseCommands(int argc, char** commands);
 
+real randomReal(real start, real end);
+
 
 #endif

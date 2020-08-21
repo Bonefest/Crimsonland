@@ -128,6 +128,29 @@ static bool animationIsLoaded(const std::string& name) {
 }
 
 
+FRAMEWORK_API void drawRect(int x, int y, int w, int h,
+                            int r, int g, int b, int a,
+                            bool relativeToCamera) {
+  int relX = x, relY = y;
+  if(relativeToCamera) {
+    convertToCameraCoordSystem(relX, relY);
+  }
+
+  SDL_Rect rect;
+  rect.x = relX;
+  rect.y = relY;
+  rect.w = w;
+  rect.h = h;
+
+  Uint8 pr, pg, pb, pa;
+  SDL_GetRenderDrawColor(g_renderer, &pr, &pg, &pb, &pa);
+  SDL_SetRenderDrawColor(g_renderer, r, g, b ,a);
+
+  SDL_RenderFillRect(g_renderer, &rect);
+
+  SDL_SetRenderDrawColor(g_renderer, pr, pg, pb, pa);
+}
+
 
 /*
  * structure declarations

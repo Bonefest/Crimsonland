@@ -42,6 +42,7 @@ real degToRad(real deg);
 real radToDeg(real rad);
 vec2 radToVec(real rad);
 vec2 degToVec(real deg);
-real vecToRad(const vec2& vec);
 
+real vecToRad(const vec2& vec);
+real vecToDeg(const vec2& vec);
 #endif

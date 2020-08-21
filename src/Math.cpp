@@ -89,6 +89,10 @@ real vecToRad(const vec2& vec) {
   return atan2(vec.y, vec.x);
 }
 
+real vecToDeg(const vec2& vec) {
+  return radToDeg(vecToRad(vec));
+}
+
 real percentOf(real value, real maxValue) {
   return value / maxValue * 100.0f;
 }

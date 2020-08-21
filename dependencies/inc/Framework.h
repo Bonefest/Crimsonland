@@ -42,8 +42,11 @@ FRAMEWORK_API void setFrozenAnimation(Sprite* s, bool frozen);
 FRAMEWORK_API void resetAnimation(Sprite* s);
 FRAMEWORK_API void setAnimationFrameDuration(Sprite* s, float duration);
 FRAMEWORK_API bool isAnimationFinished(Sprite* s);
-
 FRAMEWORK_API bool loadAnimations(const std::string& path);
+
+FRAMEWORK_API void drawRect(int x, int y, int w, int h,
+                            int r, int g, int b, int a,
+                            bool relativeToCamera = true);
 
 class Texture;
 
