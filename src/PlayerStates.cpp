@@ -164,7 +164,6 @@ void PlayerShoot::update(ECSContext& context, Entity player, real deltaTime) {
 
     playerComponent->weapons[playerComponent->currentWeaponIndex].ammo--;
     if(needToReload(playerComponent)) {
-      playerComponent->weapons[playerComponent->currentWeaponIndex].availableClips--;
       m_owner->setState(context, player, PlayerState::Reload);
       return;
     }

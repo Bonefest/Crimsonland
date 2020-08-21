@@ -167,7 +167,7 @@ void PlayerSystem::initWeapons(Player* player) {
 }
 
 WeaponData PlayerSystem::parseWeapon(nlohmann::json& parser) {
-  WeaponData result;
+  WeaponData result {};
   result.type = WeaponType(parser["type"]);
   result.damage = parser["damage"];
 
@@ -623,6 +623,8 @@ UIRenderingSystem::~UIRenderingSystem() {
 
 void UIRenderingSystem::init(ECSContext& context) {
 
+  m_radarSprite = createSprite("radar");
+  setSpriteAnchorPoint(m_radarSprite, 1.0f, 0.0f);
   m_weaponSprite = createSprite("ui_knife");
   setSpriteAnchorPoint(m_weaponSprite, 0.0f, 0.0f);
 
@@ -639,8 +641,9 @@ void UIRenderingSystem::update(ECSContext& context, real deltaTime) {
 
   Entity player = players.front();
   Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
-  WeaponType currentWeapon = playerComponent->weapons[playerComponent->currentWeaponIndex].type;
+  m_lastWeaponData = playerComponent->weapons[playerComponent->currentWeaponIndex];
 
+  WeaponType currentWeapon = m_lastWeaponData.type;
   if(currentWeapon == WeaponType::KNIFE) {
     setAnimation(m_weaponSprite, "ui_knife");
   }
@@ -657,5 +660,12 @@ void UIRenderingSystem::update(ECSContext& context, real deltaTime) {
 }
 
 void UIRenderingSystem::draw(ECSContext& context) {
+  drawSprite(m_radarSprite, int(context.data.windowWidth), 10, 192, 0.125f, 0.0f, false);
   drawSprite(m_weaponSprite, 10, 10, 192, 0.5f, 0.0f, false);
+
+  char weaponInfoBuffer[255];
+  sprintf(weaponInfoBuffer, "Ammo: %d / %d ( %d clips)", m_lastWeaponData.ammo,
+          m_lastWeaponData.clipSize, m_lastWeaponData.availableClips);
+
+  drawText(weaponInfoBuffer, 10, 10, 0.0f, 0.0f, 0, 0, 0, false);
 }

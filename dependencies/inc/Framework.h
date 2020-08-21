@@ -48,6 +48,10 @@ FRAMEWORK_API void drawRect(int x, int y, int w, int h,
                             int r, int g, int b, int a,
                             bool relativeToCamera = true);
 
+FRAMEWORK_API void drawText(const std::string& text,
+                            int x, int y, float anchorX, float anchorY,
+                            Uint8 r, Uint8 g, Uint8 b, bool relativeToCamera = false);
+
 FRAMEWORK_API void swapWindow();
 
 class Texture;

@@ -147,7 +147,9 @@ public:
   virtual void draw(ECSContext& context);
 
 private:
-  Sprite* m_weaponSprite;
+  Sprite*    m_radarSprite;
+  Sprite*    m_weaponSprite;
+  WeaponData m_lastWeaponData;
 
 };
 

@@ -4,10 +4,13 @@
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
+#include "SDL2/SDL_ttf.h"
 
 #include "inc/Framework.h"
 #include "Assert.h"
 
+
+TTF_Font* g_systemFont;
 SDL_Renderer *g_renderer;
 SDL_Window* g_window;
 int g_width = 800;
@@ -152,6 +155,40 @@ FRAMEWORK_API void drawRect(int x, int y, int w, int h,
   SDL_RenderFillRect(g_renderer, &rect);
 
   SDL_SetRenderDrawColor(g_renderer, pr, pg, pb, pa);
+}
+
+FRAMEWORK_API void drawText(const std::string& text,
+                            int x, int y, float anchorX, float anchorY,
+                            Uint8 r, Uint8 g, Uint8 b, bool relativeToCamera) {
+
+  int relX = x, relY = y;
+  if(relativeToCamera) {
+    convertToCameraCoordSystem(relX, relY);
+  }
+
+  SDL_Color textColor = {r, g, b};
+  SDL_Surface* textSurface = TTF_RenderText_Solid(g_systemFont, text.c_str(), textColor);
+  SDL_Texture* textTexture = SDL_CreateTextureFromSurface(g_renderer, textSurface);
+
+  SDL_FreeSurface(textSurface);
+
+  Uint32 format;
+  int tw, th, access;
+  SDL_QueryTexture(textTexture, &format, &access, &tw, &th);
+
+  relX += int(float(tw) * anchorX);
+  relY += int(float(th) * anchorY);
+
+  SDL_Rect dest;
+  dest.x = relX;
+  dest.y = relY;
+  dest.w = tw;
+  dest.h = th;
+
+  SDL_RenderCopy(g_renderer, textTexture, NULL, &dest);
+
+  SDL_DestroyTexture(textTexture);
+
 }
 
 FRAMEWORK_API void swapWindow() {
@@ -373,8 +410,13 @@ FRAMEWORK_API int run(Framework* framework)
     }
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_VIDEO_OPENGL) == -1) {
-        fprintf(stderr, "SDL_Init(SDL_INIT_VIDEO) failed: %s\n", SDL_GetError());
+        fprintf(stderr, "SDL_Init(SDL_INIT_VIDEO | SDL_VIDEO_OPENGL) failed: %s\n", SDL_GetError());
         return(2);
+    }
+
+    if (TTF_Init() == -1) {
+      fprintf(stderr, "TTF_Init() failed: %s\n", TTF_GetError());
+      return 2;
     }
 
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 1);
@@ -427,7 +469,6 @@ FRAMEWORK_API int run(Framework* framework)
 
     SDL_GLContext glContext = SDL_GL_CreateContext(window);
 
-    SDL_GL_SetSwapInterval(1);
 
 
 	{
@@ -451,6 +492,12 @@ FRAMEWORK_API int run(Framework* framework)
 		}
         SDL_ShowWindow(window);
 
+
+        g_systemFont = TTF_OpenFont("data/sweetheart.ttf", 20);
+        if(g_systemFont == nullptr) {
+          fprintf(stderr, "Cannot open 'data/sweetheart.ttf': %s\n", TTF_GetError());
+          return 1;
+        }
 
 		if (!GFramework->Init())
 		{
