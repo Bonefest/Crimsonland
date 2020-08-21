@@ -411,6 +411,8 @@ FRAMEWORK_API int run(Framework* framework)
 	g_renderer = SDL_CreateRenderer(window, -1,
                                   SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
 
+    SDL_SetRenderDrawBlendMode(g_renderer, SDL_BLENDMODE_BLEND);
+
     GFramework->renderer = g_renderer;
 
     SDL_GLContext glContext = SDL_GL_CreateContext(window);

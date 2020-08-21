@@ -1,6 +1,8 @@
 #include "ecs/System.h"
 #include "Utils.h"
 
+#include <fstream>
+
 void TrailSystem::update(ECSContext& context, real deltaTime) {
   
   Registry* registry = context.registry;
@@ -22,12 +24,11 @@ void TrailSystem::update(ECSContext& context, real deltaTime) {
       Assert(targetTransf != nullptr);
       Assert(targetPhysics != nullptr);
 
-      
+
       trailComponent->particles.push_back(generateParticle(targetPhysics->velocity,
                                                            targetTransf->position,
                                                            trailComponent->maxRandomAngle,
                                                            trailComponent->maxSpeed));
-      
 
     }
 
@@ -66,13 +67,12 @@ void TrailSystem::draw(ECSContext& context) {
     Trail* trailComponent = registry->getComponent<Trail>(trail, ComponentID::Trail);
 
     for(auto& particle: trailComponent->particles) {
-      int alpha = int(real(particle.elapsedTime / trailComponent->lifetime) * 255);
-
+      int alpha = int((1.0f - particle.elapsedTime / trailComponent->lifetime) * 255.0f);
       drawRect(round(particle.position.x),round(particle.position.y),
                trailComponent->size, trailComponent->size,
                128, 128, 128, alpha);
     }
-  }  
+  }
 }
 
 TrailParticle TrailSystem::generateParticle(const vec2& targetVelocity, const vec2& position,
@@ -129,21 +129,7 @@ void PlayerSystem::init(ECSContext& context) {
   physics->size = 32.0f;
 
   Player* playerComponent = new Player();
-  playerComponent->currentWeaponIndex = 0;
-
-  WeaponData weapon =  { WeaponType::KNIFE, 0, 0 };
-  WeaponData weapon2 = { WeaponType::SHOTGUN, 3, 3 };
-  weapon2.speed = 300;
-  weapon2.bulletSize = 2;
-  weapon2.lifetime = 5.0f;
-  WeaponData weapon3 = { WeaponType::RIFLE, 60, 60 };
-  WeaponData weapon4 = { WeaponType::PISTOL, 20, 20 };
-
-
-  playerComponent->weapons.push_back(weapon);
-  playerComponent->weapons.push_back(weapon2);
-  playerComponent->weapons.push_back(weapon3);
-  playerComponent->weapons.push_back(weapon4);
+  initWeapons(playerComponent);
 
   // TODO(mizofix): change damping based on current tile
   physics->damping = 1.0f;
@@ -163,6 +149,50 @@ void PlayerSystem::init(ECSContext& context) {
   playerComponent->stateController = new PlayerStateController();
   playerComponent->stateController->init(context, player);
 
+}
+
+void PlayerSystem::initWeapons(Player* player) {
+  std::ifstream file("data/weapons.json");
+  nlohmann::json parser;
+  file >> parser;
+
+  nlohmann::json weaponsParser = parser["weapons"];
+  for(auto weaponIt = weaponsParser.begin();
+      weaponIt != weaponsParser.end();
+      weaponIt++) {
+
+    player->weapons.push_back(parseWeapon(weaponIt.value()));
+
+  }
+}
+
+WeaponData PlayerSystem::parseWeapon(nlohmann::json& parser) {
+  WeaponData result;
+  result.type = WeaponType(parser["type"]);
+  result.damage = parser["damage"];
+
+  if(result.type != WeaponType::KNIFE) {
+
+    result.handOffset.x = parser["offset"]["x"];
+    result.handOffset.y = parser["offset"]["y"];
+
+    result.availableClips = parser.value("init_clips", 0);
+    result.clipSize = parser["clip_size"];
+    result.ammo = parser.value("init_ammo", 0);
+
+    result.bulletSize = parser.value("bulletSize", 2);
+    result.durability = parser.value("durability", 1);
+    result.lifetime = parser["lifetime"];
+    result.speed = parser["speed"];
+
+    result.trailLifetime = parser["trail_lifetime"];
+    result.trailMaxAngle = parser.value("trail_max_angle", 45.0f);
+    result.trailScatterSpeed = parser.value("trail_scatter_speed", 2.0f);
+
+    result.spriteName = parser["sprite_name"];
+  }
+
+  return result;
 }
 
 void PlayerSystem::update(ECSContext& context, real deltaTime) {
@@ -194,11 +224,15 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
   }
   if(m_lastFrameMouseWheel != 0) {
     std::size_t weaponsSize = playerComponent->weapons.size();
-    std::size_t newWeaponIndex = (weaponsSize + playerComponent->currentWeaponIndex + m_lastFrameMouseWheel) % weaponsSize;
+    std::size_t newWeaponIndex = (weaponsSize +
+                                  playerComponent->currentWeaponIndex +
+                                  m_lastFrameMouseWheel) % weaponsSize;
 
     if(newWeaponIndex != playerComponent->currentWeaponIndex) {
 
       playerComponent->currentWeaponIndex = newWeaponIndex;
+
+      checkCurrentWeapon(playerComponent);
 
       if(physics->idling) {
         playerComponent->stateController->setState(context, player, PlayerState::Idle);
@@ -208,11 +242,13 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
     }
 
     m_lastFrameMouseWheel = 0;
+  } else {
+    checkCurrentWeapon(playerComponent);
   }
 
 
+
   physics->acceleration = acceleration;
-  //info("%f %f\n", transf->position.x, transf->position.y);
 
   if(physics->acceleration.length() < 0.01f) {
     physics->velocity = vec2();
@@ -236,6 +272,17 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
 
   playerComponent->stateController->update(context, player, deltaTime);
 }
+
+
+void PlayerSystem::checkCurrentWeapon(Player* player) {
+  auto& weapons = player->weapons;
+  while((weapons[player->currentWeaponIndex].ammo <= 0 &&
+         weapons[player->currentWeaponIndex].availableClips <= 0) &&
+        weapons[player->currentWeaponIndex].type != WeaponType::KNIFE) {
+    player->currentWeaponIndex = (player->currentWeaponIndex + 1) % weapons.size();
+  }
+}
+
 
 void PlayerSystem::draw(ECSContext& context) {
   // TODO(mizofix): player hp-bar rendering
@@ -419,6 +466,7 @@ void EffectsSystem::onSpawnEffect(Message message) {
   case EffectType::BLOOD_2: effectName = "blood_2"; break;
   case EffectType::BLOOD_3: effectName = "blood_3"; break;
   case EffectType::FOOTPRINT: effectName = "footprint"; break;
+  case EffectType::GUN_EXPLOSION: effectName = "gun_explosion"; break;
 
   default: break;
   }

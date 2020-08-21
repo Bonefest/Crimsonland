@@ -37,7 +37,8 @@ enum class EffectType {
   BLOOD_3,
   BLOOD_RANDOM,
   BLOODPRINT,
-  FOOTPRINT
+  FOOTPRINT,
+  GUN_EXPLOSION
 };
 
 class Registry;

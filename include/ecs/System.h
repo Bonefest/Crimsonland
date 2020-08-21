@@ -1,9 +1,11 @@
 #ifndef SYSTEM_H_INCLUDED
 #define SYSTEM_H_INCLUDED
 
-#include "Common.h"
 #include "Message.h"
+#include "Common.h"
 #include "Assert.h"
+#include "json.hpp"
+
 #include <list>
 
 class Registry;
@@ -14,6 +16,7 @@ struct ECSContext {
 };
 
 #include "ecs/Registry.h"
+#include "ecs/Components.h"
 
 class System {
 public:
@@ -39,6 +42,8 @@ private:
                                  real maxSpeed);
 };
 
+class Player;
+
 class PlayerSystem: public System {
 public:
   virtual void init(ECSContext& context);
@@ -50,6 +55,10 @@ public:
   void onMouseWheel(Message message);
 
 private:
+  void initWeapons(Player* player);
+  WeaponData parseWeapon(nlohmann::json& parser);
+  void checkCurrentWeapon(Player* player);
+
   void generateFootprint(vec2 position, real angle);
   real getPlayerViewDirection();
   Entity getPlayer(ECSContext& context);

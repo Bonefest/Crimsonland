@@ -1,7 +1,8 @@
+
 #include "PlayerStateController.h"
 
 
-PlayerStateController::PlayerStateController() {
+PlayerStateController::PlayerStateController(): m_currentState(nullptr) {
   for(int i = 0;i < int(PlayerState::COUNT); ++i) {
     m_states[i] = nullptr;
   }

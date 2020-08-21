@@ -2,6 +2,10 @@
 #define COMMON_H_INCLUDED
 
 #include <stdint.h>
+#include <string>
+
+#include "Math.h"
+
 
 #ifndef NDEBUG
 #define info(...) fprintf(stderr, __VA_ARGS__)
@@ -9,7 +13,6 @@
 #define info(...)
 #endif
 
-#include "Math.h"
 
 struct WorldData {
 
@@ -30,7 +33,6 @@ struct WorldData {
 };
 
 enum class WeaponType {
-    FISTS,
     KNIFE,
     PISTOL,
     SHOTGUN,
@@ -41,7 +43,11 @@ enum class WeaponType {
 
 struct WeaponData {
   WeaponType type;
-  int        maxAmmo;
+
+  vec2       handOffset;
+
+  int        availableClips;
+  int        clipSize;
   int        ammo;
 
   int        bulletSize;
@@ -49,6 +55,12 @@ struct WeaponData {
   real       lifetime;
   real       damage;
   real       speed;
+
+  real       trailLifetime;
+  real       trailMaxAngle;
+  real       trailScatterSpeed;
+
+  std::string spriteName;
 };
 
 

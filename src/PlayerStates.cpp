@@ -114,11 +114,12 @@ void PlayerShoot::onEnter(ECSContext& context, Entity player) {
 
   WeaponData currentWeapon = playerComponent->weapons[playerComponent->currentWeaponIndex];
 
-  if(currentWeapon.type == WeaponType::KNIFE) {
+  if(currentWeapon.type == WeaponType::KNIFE || !hasAvailableAmmo(playerComponent)) {
     m_owner->setState(context, player, PlayerState::Idle);
+    return;
   }
 
-  if(!hasAmmo(playerComponent)) {
+  if(needToReload(playerComponent)) {
     m_owner->setState(context, player, PlayerState::Reload);
     return;
   }
@@ -148,9 +149,7 @@ void PlayerShoot::update(ECSContext& context, Entity player, real deltaTime) {
     Transformation* transf = context.registry->getComponent<Transformation>(player,
                                                                             ComponentID::Transformation);
 
-    // TODO(mizofix): move to weapon data
-    vec2 offset(10.0f, 10.0f);
-
+    vec2 offset = playerComponent->weapons[playerComponent->currentWeaponIndex].handOffset;
     vec2 playerHeading = degToVec(transf->angle);
     vec2 playerSide = playerHeading.perp();
 
@@ -159,16 +158,18 @@ void PlayerShoot::update(ECSContext& context, Entity player, real deltaTime) {
     Bullet bullet = generateBullet(context.registry, playerHeading, bulletPosition,
                                    playerComponent->weapons[playerComponent->currentWeaponIndex]);
 
-
+    vec2 explosionPosition = bulletPosition + playerHeading * 12.0f;
+    generateExplosion(explosionPosition, transf->angle);
     // /////////////////////
 
     playerComponent->weapons[playerComponent->currentWeaponIndex].ammo--;
-    if(!hasAmmo(playerComponent)) {
+    if(needToReload(playerComponent)) {
+      playerComponent->weapons[playerComponent->currentWeaponIndex].availableClips--;
       m_owner->setState(context, player, PlayerState::Reload);
       return;
     }
 
-    if(isButtonPressed(FRMouseButton::LEFT)) {
+    if(isButtonPressed(FRMouseButton::LEFT) && hasAvailableAmmo(playerComponent)) {
       resetAnimation(model->sprite);
     } else {
 
@@ -186,6 +187,7 @@ void PlayerShoot::update(ECSContext& context, Entity player, real deltaTime) {
 Entity PlayerShoot::generateBullet(Registry* registry,
                                    const vec2& direction, const vec2& position,
                                    const WeaponData& data) {
+
   Entity bullet = registry->createEntity();
   Physics* physics = new Physics();
   physics->velocity = direction * data.speed;
@@ -205,14 +207,40 @@ Entity PlayerShoot::generateBullet(Registry* registry,
   registry->addComponent(bullet, bulletComponent);
 
   Entity trail = registry->createEntity();
-  Trail* trailComp = new Trail(bullet, data.lifetime, 45.0f, 2.0f, data.bulletSize);
+  Trail* trailComp = new Trail(bullet,
+                               data.trailLifetime,
+                               data.trailMaxAngle,
+                               data.trailScatterSpeed,
+                               data.bulletSize);
+
   registry->addComponent(trail, trailComp);
 
   return bullet;
 }
 
-bool PlayerShoot::hasAmmo(Player* player) {
-  return player->weapons[player->currentWeaponIndex].ammo >= 0;
+void PlayerShoot::generateExplosion(const vec2& position, real angle) {
+  Message msg;
+  msg.type = int(MessageType::SPAWN_EFFECT);
+  msg.effect_info.type = EffectType::GUN_EXPLOSION;
+  msg.effect_info.x = position.x;
+  msg.effect_info.y = position.y;
+  msg.effect_info.scale = 1.0f;
+  msg.effect_info.angle = angle;
+  msg.effect_info.lifetime = 5.0f;
+  msg.effect_info.fadeOut = false;
+
+  notify(msg);
+}
+
+bool PlayerShoot::needToReload(Player* player) {
+  return (player->weapons[player->currentWeaponIndex].ammo <= 0 &&
+    player->weapons[player->currentWeaponIndex].availableClips > 0);
+}
+
+bool PlayerShoot::hasAvailableAmmo(Player* player) {
+  return (player->weapons[player->currentWeaponIndex].ammo > 0 ||
+          player->weapons[player->currentWeaponIndex].availableClips > 0);
+
 }
 
 void PlayerAttack::onEnter(ECSContext& context, Entity player) {
@@ -267,7 +295,7 @@ void PlayerReload::onEnter(ECSContext& context, Entity player) {
 
   WeaponData currentWeapon = playerComponent->weapons[playerComponent->currentWeaponIndex];
 
-  if(currentWeapon.type == WeaponType::KNIFE) {
+  if(currentWeapon.type == WeaponType::KNIFE || currentWeapon.availableClips < 0) {
     m_owner->setState(context, player, PlayerState::Idle);
     return;
   }
@@ -291,7 +319,8 @@ void PlayerReload::update(ECSContext& context, Entity player, real deltaTime) {
   updateAnimation(model->sprite, deltaTime);
   if(isAnimationFinished(model->sprite)) {
 
-    playerComponent->weapons[playerComponent->currentWeaponIndex].ammo = playerComponent->weapons[playerComponent->currentWeaponIndex].maxAmmo;
+    playerComponent->weapons[playerComponent->currentWeaponIndex].ammo = playerComponent->weapons[playerComponent->currentWeaponIndex].clipSize;
+    playerComponent->weapons[playerComponent->currentWeaponIndex].availableClips--;
 
     if(isButtonPressed(FRMouseButton::LEFT)) {
       m_owner->setState(context, player, PlayerState::Shoot);

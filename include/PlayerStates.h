@@ -55,7 +55,10 @@ private:
                         const vec2& direction, const vec2& position,
                         const WeaponData& data);
 
-  bool hasAmmo(Player* player);
+  void generateExplosion(const vec2& position, real angle);
+
+  bool needToReload(Player* player);
+  bool hasAvailableAmmo(Player* player);
 };
 
 class PlayerAttack: public PlayerStateBase {
