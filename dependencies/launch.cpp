@@ -489,6 +489,11 @@ FRAMEWORK_API int run(Framework* framework)
 					case SDL_MOUSEMOTION:
 						GFramework->onMouseMove(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel);
                         break;
+                    case SDL_MOUSEWHEEL: {
+                      int size = event.wheel.y * ((event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) ? -1: 1);
+                          GFramework->onMouseWheel(size);
+                    }
+                      break;
                     case SDL_QUIT:
                         done = 1;
                         break;

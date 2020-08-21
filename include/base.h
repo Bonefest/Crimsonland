@@ -41,11 +41,11 @@ public:
 
   virtual void onMouseButtonClick(FRMouseButton button, bool isReleased) { }
 
+  virtual void onMouseWheel(int y);
+
   virtual void onKeyPressed(FRKey k);
 
   virtual void onKeyReleased(FRKey k) { }
-
-  void test(Message message) { }
 
 private:
 
@@ -57,11 +57,8 @@ private:
   void drawToScreen();
   void updateTimer();
 
-  void collisionSystem();
-  void penetrationResolution();
-
+  void drawBackground();
   void drawPlants(std::vector<std::pair<Sprite*, vec2>>& plants);
-
   void clearPlants();
 
   WorldData m_worldData;

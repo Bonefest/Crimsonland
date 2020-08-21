@@ -22,6 +22,10 @@ enum class MessageType {
   ECS_ENTITY_DELETE,
   ECS_ENTITY_CREATED,
 
+  // EVENTS
+
+  ON_MOUSE_WHEEL,
+
   COUNT
 };
 
@@ -81,6 +85,11 @@ struct Message {
       bool fadeOut;
 
     } effect_info;
+
+    struct {
+      int y;
+
+    } wheel;
 
     void* custom_data;
 

@@ -20,7 +20,7 @@ void PlayerStateController::init(ECSContext& context, Entity player) {
   m_states[int(PlayerState::Move)] = new PlayerMove();
   m_states[int(PlayerState::MeleeAttack)] = new PlayerAttack();
   m_states[int(PlayerState::Shoot)] = new PlayerShoot();
-  //m_states[int(PlayerState::Reload)] = new PlayerReload();
+  m_states[int(PlayerState::Reload)] = new PlayerReload();
 
   for(int i = 0; i < int(PlayerState::COUNT); ++i) {
     if(m_states[i]) {

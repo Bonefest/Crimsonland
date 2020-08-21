@@ -108,6 +108,8 @@ public:
 
 	virtual void onMouseButtonClick(FRMouseButton button, bool isReleased) = 0;
 
+    virtual void onMouseWheel(int y) = 0;
+
 	virtual void onKeyPressed(FRKey k) = 0;
 
 	virtual void onKeyReleased(FRKey k) = 0;

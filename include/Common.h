@@ -36,7 +36,7 @@ enum class WeaponType {
     SHOTGUN,
     RIFLE,
     CHAINGUN
-    };
+};
 
 
 struct WeaponData {

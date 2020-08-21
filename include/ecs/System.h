@@ -33,6 +33,7 @@ public:
 
   void onWeaponPickup(Message message);
   void onPowerupPickup(Message message);
+  void onMouseWheel(Message message);
 
 private:
   void generateFootprint(vec2 position, real angle);
@@ -41,6 +42,8 @@ private:
 
   Bitfield m_playerBitfield;
   real m_lastFootprintElapsedTime;
+
+  int m_lastFrameMouseWheel;
 };
 
 class ZombieRenderingSystem: public System {

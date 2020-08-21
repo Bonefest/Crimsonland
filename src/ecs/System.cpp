@@ -9,6 +9,10 @@ void PlayerSystem::init(ECSContext& context) {
                                &PlayerSystem::onPowerupPickup,
                                this);
 
+  registerMethod<PlayerSystem>(int(MessageType::ON_MOUSE_WHEEL),
+                               &PlayerSystem::onMouseWheel,
+                               this);
+
   m_lastFootprintElapsedTime = 0.0f;
 
   Entity player = context.registry->createEntity();
@@ -37,8 +41,15 @@ void PlayerSystem::init(ECSContext& context) {
   playerComponent->currentWeaponIndex = 0;
 
   WeaponData weapon = { WeaponType::KNIFE, 0, 0 };
-  playerComponent->weapons.push_back(weapon);
+  WeaponData weapon2 = { WeaponType::SHOTGUN, 3, 3 };
+  WeaponData weapon3 = { WeaponType::RIFLE, 60, 60 };
+  WeaponData weapon4 = { WeaponType::PISTOL, 20, 20 };
 
+
+  playerComponent->weapons.push_back(weapon);
+  playerComponent->weapons.push_back(weapon2);
+  playerComponent->weapons.push_back(weapon3);
+  playerComponent->weapons.push_back(weapon4);
 
   // TODO(mizofix): change damping based on current tile
   physics->damping = 1.0f;
@@ -86,6 +97,24 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
   if(isKeyPressed(FRKey::DOWN)) {
     acceleration -= heading * context.data.maxPlayerSpeed;
   }
+  if(m_lastFrameMouseWheel != 0) {
+    std::size_t weaponsSize = playerComponent->weapons.size();
+    std::size_t newWeaponIndex = (weaponsSize + playerComponent->currentWeaponIndex + m_lastFrameMouseWheel) % weaponsSize;
+
+    if(newWeaponIndex != playerComponent->currentWeaponIndex) {
+
+      playerComponent->currentWeaponIndex = newWeaponIndex;
+
+      if(physics->idling) {
+        playerComponent->stateController->setState(context, player, PlayerState::Idle);
+      } else {
+        playerComponent->stateController->setState(context,  player, PlayerState::Move);
+      }
+    }
+
+    m_lastFrameMouseWheel = 0;
+  }
+
 
   physics->acceleration = acceleration;
   //info("%f %f\n", transf->position.x, transf->position.y);
@@ -133,6 +162,10 @@ void PlayerSystem::onWeaponPickup(Message message) {
 
 void PlayerSystem::onPowerupPickup(Message message) {
 
+}
+
+void PlayerSystem::onMouseWheel(Message message) {
+  m_lastFrameMouseWheel = message.wheel.y;
 }
 
 void PlayerSystem::generateFootprint(vec2 position, real angle) {

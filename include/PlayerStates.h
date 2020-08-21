@@ -63,4 +63,11 @@ public:
 
 };
 
+class PlayerReload: public PlayerStateBase {
+public:
+  virtual void onEnter(ECSContext& context, Entity player);
+  virtual void update(ECSContext& context, Entity player, real deltaTime);
+
+};
+
 #endif

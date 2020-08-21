@@ -9,7 +9,7 @@
 CrimsonlandFramework::CrimsonlandFramework(int argc, char** commands): m_lastTime(0.0f) {
   m_worldData = parseCommands(argc, commands);
   m_worldData.maxEffectsNumber = 10;
-  m_worldData.maxPlayerSpeed = 100.0f;
+  m_worldData.maxPlayerSpeed = 25.0f;
 
   info("-------------------------\n");
   info("final world data values are:\n");
@@ -44,7 +44,7 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
-  m_background = createSprite("grass");
+  m_background = createSprite("sand");
   initPlants();
 
   initECS();
@@ -120,17 +120,27 @@ void CrimsonlandFramework::draw() {
   setTextureAsTarget(m_screenTexture);
 
   drawTestBackground();
-  drawSprite(m_background, int(m_worldData.windowWidth * 0.5f),
-             int(m_worldData.windowHeight * 0.5f),
-             255,
-             1.0f,
-             0.0f,
-             false);
-
+  drawBackground();
   drawPlants(m_bushes);
-
   m_systemManager.drawSystems(m_context);
   drawPlants(m_trees);
+}
+
+void CrimsonlandFramework::drawBackground() {
+
+  int tilesX = ceil((m_worldData.mapWidth + m_worldData.windowWidth) / 1000.0f);
+  int tilesY = ceil((m_worldData.mapHeight + m_worldData.windowHeight) / 1000.0f);
+
+  for(int y = 0; y < tilesY; y++) {
+    for(int x = 0; x < tilesX; x++) {
+      int posX = int((real(x) * 1000.0f) - m_worldData.mapWidth * 0.5f);
+      int posY = int((real(y) * 1000.0f) - m_worldData.mapHeight * 0.5f);
+
+      drawSprite(m_background, posX, posY);
+
+    }
+  }
+
 }
 
 void CrimsonlandFramework::drawPlants(std::vector<std::pair<Sprite*, vec2>>& plants) {
@@ -181,33 +191,15 @@ void CrimsonlandFramework::onKeyPressed(FRKey k) {
 
 }
 
+void CrimsonlandFramework::onMouseWheel(int y) {
+  Message msg;
+  msg.type = int(MessageType::ON_MOUSE_WHEEL);
+  msg.wheel.y = y;
+  notify(msg);
+
+}
+
 void CrimsonlandFramework::Close() {
   destroySprite(m_background);
   destroyTexture(m_screenTexture);
-}
-
-void CrimsonlandFramework::collisionSystem() {
-  penetrationResolution();
-}
-
-void CrimsonlandFramework::penetrationResolution() {
-
-  // // TODO(mizofix): more than one iteration
-  // // NOTE(mizofix): warning! extremely slow function
-  // for(auto entityAIt = m_entities.begin(); entityAIt != m_entities.end(); entityAIt++) {
-  //   for(auto entityBIt = entityAIt + 1; entityBIt != m_entities.end(); entityBIt++) {
-  //     real totalSize = (*entityAIt)->getSize() + (*entityBIt)->getSize();
-  //     real distance = (*entityAIt)->getPosition().distance((*entityBIt)->getPosition());
-
-  //     if(distance < totalSize) {
-  //       vec2 direction = ((*entityBIt)->getPosition() - (*entityAIt)->getPosition());
-  //       direction.normalize();
-  //       real delta = totalSize - distance;
-
-  //       (*entityAIt)->setPosition((*entityAIt)->getPosition() - direction * delta * 0.5f);
-  //       (*entityBIt)->setPosition((*entityBIt)->getPosition() + direction * delta * 0.5f);
-  //     }
-
-  //   }
-  // }
 }

@@ -214,3 +214,51 @@ void PlayerAttack::update(ECSContext& context, Entity player, real deltaTime) {
   }
 
 }
+
+
+void PlayerReload::onEnter(ECSContext& context, Entity player) {
+  Model* model = context.registry->getComponent<Model>(player, ComponentID::Model);
+  Player* playerComponent = context.registry->getComponent<Player>(player, ComponentID::Player);
+
+  WeaponData currentWeapon = playerComponent->weapons[playerComponent->currentWeaponIndex];
+
+  if(currentWeapon.type == WeaponType::KNIFE) {
+    m_owner->setState(context, player, PlayerState::Idle);
+    return;
+  }
+  else if(currentWeapon.type == WeaponType::PISTOL) {
+    setAnimation(model->sprite, "pistol_reload");
+  }
+  else if(currentWeapon.type == WeaponType::SHOTGUN) {
+    setAnimation(model->sprite, "shotgun_reload");
+  }
+  else if(currentWeapon.type == WeaponType::RIFLE) {
+    setAnimation(model->sprite, "rifle_reload");
+  }
+}
+
+void PlayerReload::update(ECSContext& context, Entity player, real deltaTime) {
+
+  Model* model = context.registry->getComponent<Model>(player, ComponentID::Model);
+  Player* playerComponent = context.registry->getComponent<Player>(player, ComponentID::Player);
+  Physics* physics = context.registry->getComponent<Physics>(player, ComponentID::Physics);
+
+  updateAnimation(model->sprite, deltaTime);
+  if(isAnimationFinished(model->sprite)) {
+
+    playerComponent->weapons[playerComponent->currentWeaponIndex].ammo = playerComponent->weapons[playerComponent->currentWeaponIndex].maxAmmo;
+
+    if(isButtonPressed(FRMouseButton::LEFT)) {
+      m_owner->setState(context, player, PlayerState::Shoot);
+    } else {
+      if(physics->idling) {
+        m_owner->setState(context, player, PlayerState::Idle);
+      } else {
+        m_owner->setState(context, player, PlayerState::Move);
+      }
+    }
+
+    return;
+  }
+
+}
