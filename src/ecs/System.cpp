@@ -616,3 +616,46 @@ void BulletSystem::update(ECSContext& context, real deltaTime) {
 void BulletSystem::onCollision(Message message) {
   m_unprocessedCollisions.push_back(message);
 }
+
+UIRenderingSystem::~UIRenderingSystem() {
+  destroySprite(m_weaponSprite);
+}
+
+void UIRenderingSystem::init(ECSContext& context) {
+
+  m_weaponSprite = createSprite("ui_knife");
+  setSpriteAnchorPoint(m_weaponSprite, 0.0f, 0.0f);
+
+}
+
+
+void UIRenderingSystem::update(ECSContext& context, real deltaTime) {
+
+  Registry* registry = context.registry;
+  Bitfield desiredComponents = buildBitfield(ComponentID::Player);
+  auto players = registry->findEntities(desiredComponents);
+
+  Assert(!players.empty());
+
+  Entity player = players.front();
+  Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
+  WeaponType currentWeapon = playerComponent->weapons[playerComponent->currentWeaponIndex].type;
+
+  if(currentWeapon == WeaponType::KNIFE) {
+    setAnimation(m_weaponSprite, "ui_knife");
+  }
+  else if(currentWeapon == WeaponType::PISTOL) {
+    setAnimation(m_weaponSprite, "ui_pistol");
+  }
+  else if(currentWeapon == WeaponType::RIFLE) {
+    setAnimation(m_weaponSprite, "ui_rifle");
+  }
+  else if(currentWeapon == WeaponType::SHOTGUN) {
+    setAnimation(m_weaponSprite, "ui_shotgun");
+  }
+
+}
+
+void UIRenderingSystem::draw(ECSContext& context) {
+  drawSprite(m_weaponSprite, 10, 10, 192, 0.5f, 0.0f, false);
+}

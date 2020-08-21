@@ -7,16 +7,17 @@ public:
                m_startX(0), m_startY(0),
                m_currentX(0), m_currentY(0),
                m_endX(0), m_endY(0),
-               m_frameWidth(0), m_frameHeight(0),
+               m_frameWidth(0), m_frameHeight(0), m_rowWidth(0),
                m_finished(false), m_frameDuration(0.0f), m_elapsedTime(0.0f) { }
 
   Animation(int startX, int startY, int endX, int endY,
-            int frameWidth, int frameHeight,
+            int frameWidth, int frameHeight, int rowWidth,
             float frameDuration): texture(nullptr), frozen(false), repeat(false), scale(1.0f),
                                   m_startX(startX), m_startY(startY),
                                   m_currentX(startX), m_currentY(startY),
                                   m_endX(endX), m_endY(endY),
                                   m_frameWidth(frameWidth), m_frameHeight(frameHeight),
+                                  m_rowWidth(rowWidth),
                                   m_finished(false),
                                   m_frameDuration(frameDuration), m_elapsedTime(0.0f) { }
 
@@ -28,7 +29,7 @@ public:
       if(m_elapsedTime >= m_frameDuration) {
         m_currentX += m_frameWidth;
 
-        if(m_currentX >= m_endX) {
+        if(m_currentX >= m_startX + m_rowWidth - m_frameWidth) {
 
           if(m_currentY < m_endY) {
             m_currentX = m_startX;
@@ -87,6 +88,8 @@ private:
 
   int m_frameWidth;
   int m_frameHeight;
+
+  int m_rowWidth;
 
   bool m_finished;
 

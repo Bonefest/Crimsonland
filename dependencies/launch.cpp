@@ -9,6 +9,7 @@
 #include "Assert.h"
 
 SDL_Renderer *g_renderer;
+SDL_Window* g_window;
 int g_width = 800;
 int g_height = 600;
 
@@ -85,12 +86,14 @@ static bool parseAnimation(nlohmann::json& parser, Animation& animation) {
 
   int width = parser["size"]["w"], height = parser["size"]["h"];
 
+  int rowWidth = parser.value("row_width", width);
+
   float duration = parser["duration"];
   bool repeat = parser["repeat"];
 
   float scale = parser.value("scale", 1.0f);
 
-  Animation result(startX, startY, endX, endY, width, height, duration);
+  Animation result(startX, startY, endX, endY, width, height, rowWidth, duration);
   result.texture = texture;
   result.repeat = repeat;
   result.scale = scale;
@@ -149,6 +152,10 @@ FRAMEWORK_API void drawRect(int x, int y, int w, int h,
   SDL_RenderFillRect(g_renderer, &rect);
 
   SDL_SetRenderDrawColor(g_renderer, pr, pg, pb, pa);
+}
+
+FRAMEWORK_API void swapWindow() {
+  SDL_GL_SwapWindow(g_window);
 }
 
 
@@ -406,8 +413,11 @@ FRAMEWORK_API int run(Framework* framework)
     //     GFramework->renderer = g_renderer;
     // }
 
-    window = SDL_CreateWindow("Rendering to a texture!", SDL_WINDOWPOS_CENTERED,
-                                       SDL_WINDOWPOS_CENTERED, g_width, g_height, 0);
+    window = SDL_CreateWindow("Crimsonland", SDL_WINDOWPOS_CENTERED,
+                               SDL_WINDOWPOS_CENTERED, g_width, g_height, 0);
+
+    g_window = window;
+
 	g_renderer = SDL_CreateRenderer(window, -1,
                                   SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
 
@@ -416,6 +426,8 @@ FRAMEWORK_API int run(Framework* framework)
     GFramework->renderer = g_renderer;
 
     SDL_GLContext glContext = SDL_GL_CreateContext(window);
+
+    SDL_GL_SetSwapInterval(1);
 
 
 	{

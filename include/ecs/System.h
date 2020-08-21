@@ -137,4 +137,18 @@ private:
   uint32_t         m_maximalEffectsNumber;
 };
 
+class UIRenderingSystem: public System {
+public:
+
+  ~UIRenderingSystem();
+
+  virtual void init(ECSContext& context);
+  virtual void update(ECSContext& context, real deltaTime);
+  virtual void draw(ECSContext& context);
+
+private:
+  Sprite* m_weaponSprite;
+
+};
+
 #endif

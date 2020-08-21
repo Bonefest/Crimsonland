@@ -59,13 +59,17 @@ private:
 
   void drawBackground();
   void drawPlants(std::vector<std::pair<Sprite*, vec2>>& plants);
+  void drawUI();
+
   void clearPlants();
 
   WorldData m_worldData;
 
-  Registry  m_registry;
-  ECSContext m_context;
-  SystemManager m_systemManager;
+  Registry           m_registry;
+  ECSContext         m_context;
+  UIRenderingSystem* m_uiSystem;
+  SystemManager      m_systemManager;
+
 
   Sprite* m_background;
   std::vector<std::pair<Sprite*, vec2>> m_bushes;

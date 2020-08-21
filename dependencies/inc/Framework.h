@@ -48,6 +48,8 @@ FRAMEWORK_API void drawRect(int x, int y, int w, int h,
                             int r, int g, int b, int a,
                             bool relativeToCamera = true);
 
+FRAMEWORK_API void swapWindow();
+
 class Texture;
 
 FRAMEWORK_API Texture* createTexture(int width, int height);

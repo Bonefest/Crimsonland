@@ -44,9 +44,9 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
+
   m_background = createSprite("sand");
   initPlants();
-
   initECS();
 
   m_screenTexture = createTexture(m_worldData.windowWidth, m_worldData.windowHeight);
@@ -63,11 +63,13 @@ void CrimsonlandFramework::initECS() {
   m_context.data = m_worldData;
 
   m_systemManager.addSystem(m_context, new PhysicsIntegrationSystem());
-  m_systemManager.addSystem(m_context, new EffectsSystem());
   m_systemManager.addSystem(m_context, new TrailSystem());
+  m_systemManager.addSystem(m_context, new EffectsSystem());
   m_systemManager.addSystem(m_context, new PlayerSystem());
   m_systemManager.addSystem(m_context, new ZombieRenderingSystem());
 
+  m_uiSystem = new UIRenderingSystem();
+  m_uiSystem->init(m_context);
 }
 
 void CrimsonlandFramework::initPlants() {
@@ -115,6 +117,7 @@ void CrimsonlandFramework::updateTimer() {
 
 void CrimsonlandFramework::update() {
   m_systemManager.updateSystems(m_context, m_deltaTime);
+  m_uiSystem->update(m_context, m_deltaTime);
 }
 
 void CrimsonlandFramework::draw() {
@@ -160,6 +163,9 @@ void CrimsonlandFramework::drawToScreen() {
 
   bindTexture(m_screenTexture);
 
+  GLint oldProgram;
+  glGetIntegerv(GL_CURRENT_PROGRAM, &oldProgram);
+
   glUseProgram(m_bumpProgram.getProgramID());
 
 
@@ -182,6 +188,9 @@ void CrimsonlandFramework::drawToScreen() {
 
   glEnd();
 
+  glUseProgram(oldProgram);
+
+  m_uiSystem->draw(m_context);
 }
 
 void CrimsonlandFramework::onMouseMove(int x, int y, int xrelative, int yrelative) {
@@ -203,4 +212,5 @@ void CrimsonlandFramework::onMouseWheel(int y) {
 void CrimsonlandFramework::Close() {
   destroySprite(m_background);
   destroyTexture(m_screenTexture);
+  delete m_uiSystem;
 }
