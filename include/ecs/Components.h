@@ -146,6 +146,24 @@ struct Trail: Component {
   std::list<TrailParticle> particles;
 };
 
+struct Bullet: Component {
+
+  Bullet(real inDamage = 0.0f, int inDurability = 0): damage(inDamage),
+                                                      durability(inDurability) { }
+
+  ComponentID getID() {
+    return ComponentID::Bullet;
+  }
+
+  real damage;
+  real lifetime;
+  real elapsedTime;
+
+  // NOTE(mizofix): some bullets can move through several zombies
+  int durability;
+
+};
+
 struct Zombie: Component {
 
   virtual ComponentID getID() {

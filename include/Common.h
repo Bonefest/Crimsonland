@@ -44,11 +44,19 @@ struct WeaponData {
   int        maxAmmo;
   int        ammo;
 
-  real shootDuration;
-  real attackDuration;
+  int        bulletSize;
+  int        durability;
+  real       lifetime;
+  real       damage;
+  real       speed;
 };
 
 
 using Entity = uint32_t;
 
+namespace Constants {
+
+  const static Entity INVALID_ENTITY = uint32_t(-1);
+
+};
 #endif

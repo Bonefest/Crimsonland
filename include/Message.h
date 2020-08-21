@@ -25,6 +25,7 @@ enum class MessageType {
   // EVENTS
 
   ON_MOUSE_WHEEL,
+  ON_COLLISION,
 
   COUNT
 };
@@ -90,6 +91,13 @@ struct Message {
       int y;
 
     } wheel;
+
+    struct {
+
+      Entity entityA;
+      Entity entityB;
+
+    } collision_info;
 
     void* custom_data;
 

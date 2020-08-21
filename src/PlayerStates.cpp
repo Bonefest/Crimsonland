@@ -145,6 +145,23 @@ void PlayerShoot::update(ECSContext& context, Entity player, real deltaTime) {
 
     // TODO(mizofix): generate bullet based on weapon type
 
+    Transformation* transf = context.registry->getComponent<Transformation>(player,
+                                                                            ComponentID::Transformation);
+
+    // TODO(mizofix): move to weapon data
+    vec2 offset(10.0f, 10.0f);
+
+    vec2 playerHeading = degToVec(transf->angle);
+    vec2 playerSide = playerHeading.perp();
+
+    vec2 bulletPosition = playerHeading * offset.x + playerSide * offset.y + transf->position;
+
+    Bullet bullet = generateBullet(context.registry, playerHeading, bulletPosition,
+                                   playerComponent->weapons[playerComponent->currentWeaponIndex]);
+
+
+    // /////////////////////
+
     playerComponent->weapons[playerComponent->currentWeaponIndex].ammo--;
     if(!hasAmmo(playerComponent)) {
       m_owner->setState(context, player, PlayerState::Reload);
@@ -166,6 +183,34 @@ void PlayerShoot::update(ECSContext& context, Entity player, real deltaTime) {
   }
 
 }
+Entity PlayerShoot::generateBullet(Registry* registry,
+                                   const vec2& direction, const vec2& position,
+                                   const WeaponData& data) {
+  Entity bullet = registry->createEntity();
+  Physics* physics = new Physics();
+  physics->velocity = direction * data.speed;
+  physics->size = data.bulletSize;
+
+  Transformation* transformation = new Transformation();
+  transformation->position = position;
+  transformation->angle = vecToDeg(direction);
+
+  Bullet* bulletComponent = new Bullet();
+  bulletComponent->lifetime = data.lifetime;
+  bulletComponent->durability = data.durability;
+  bulletComponent->damage = data.damage;
+
+  registry->addComponent(bullet, physics);
+  registry->addComponent(bullet, transformation);
+  registry->addComponent(bullet, bulletComponent);
+
+  Entity trail = registry->createEntity();
+  Trail* trailComp = new Trail(bullet, data.lifetime, 45.0f, 2.0f, data.bulletSize);
+  registry->addComponent(trail, trailComp);
+
+  return bullet;
+}
+
 bool PlayerShoot::hasAmmo(Player* player) {
   return player->weapons[player->currentWeaponIndex].ammo >= 0;
 }

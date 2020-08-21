@@ -64,6 +64,7 @@ void CrimsonlandFramework::initECS() {
 
   m_systemManager.addSystem(m_context, new PhysicsIntegrationSystem());
   m_systemManager.addSystem(m_context, new EffectsSystem());
+  m_systemManager.addSystem(m_context, new TrailSystem());
   m_systemManager.addSystem(m_context, new PlayerSystem());
   m_systemManager.addSystem(m_context, new ZombieRenderingSystem());
 

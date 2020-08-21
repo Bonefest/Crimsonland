@@ -51,6 +51,10 @@ public:
   virtual void update(ECSContext& context, Entity player, real deltaTime);
 
 private:
+  Entity generateBullet(Registry* registry,
+                        const vec2& direction, const vec2& position,
+                        const WeaponData& data);
+
   bool hasAmmo(Player* player);
 };
 

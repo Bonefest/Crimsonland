@@ -58,8 +58,6 @@ private:
   real m_lastFootprintElapsedTime;
 
   int m_lastFrameMouseWheel;
-
-  std::list<SDL_Rect> m_trail;
 };
 
 class ZombieRenderingSystem: public System {
@@ -72,6 +70,36 @@ public:
   virtual void update(ECSContext& context, real deltaTime);
 };
 
+
+// TODO(mizofix): At least Spatial Partioning optimization (or BSP)
+class PhysicsCollisionSystem: public System {
+public:
+  virtual void update(ECSContext& context, real deltaTime);
+};
+
+// NOTE(mizofix): Shouldn't we integrate penetration resolution to PhysicsCollisionSystem
+
+using MessageContainer = std::list<Message>;
+
+class PenetrationResolutionSystem: public System {
+public:
+  virtual void init(ECSContext& context);
+  virtual void update(ECSContext& context, real deltaTime);
+
+  void onCollision(Message message);
+private:
+  MessageContainer m_unprocessedCollisions;
+};
+
+class BulletSystem: public System {
+public:
+  virtual void init(ECSContext& context);
+  virtual void update(ECSContext& context, real deltaTime);
+
+  void onCollision(Message message);
+private:
+  MessageContainer m_unprocessedCollisions;
+};
 
 struct Effect {
 

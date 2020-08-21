@@ -131,8 +131,11 @@ void PlayerSystem::init(ECSContext& context) {
   Player* playerComponent = new Player();
   playerComponent->currentWeaponIndex = 0;
 
-  WeaponData weapon = { WeaponType::KNIFE, 0, 0 };
+  WeaponData weapon =  { WeaponType::KNIFE, 0, 0 };
   WeaponData weapon2 = { WeaponType::SHOTGUN, 3, 3 };
+  weapon2.speed = 300;
+  weapon2.bulletSize = 2;
+  weapon2.lifetime = 5.0f;
   WeaponData weapon3 = { WeaponType::RIFLE, 60, 60 };
   WeaponData weapon4 = { WeaponType::PISTOL, 20, 20 };
 
@@ -159,6 +162,7 @@ void PlayerSystem::init(ECSContext& context) {
 
   playerComponent->stateController = new PlayerStateController();
   playerComponent->stateController->init(context, player);
+
 }
 
 void PlayerSystem::update(ECSContext& context, real deltaTime) {
@@ -231,23 +235,6 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
   }
 
   playerComponent->stateController->update(context, player, deltaTime);
-
-  // TEST
-
-  
-  if(m_trail.size() > 300) {
-    m_trail.pop_front();
-  }
-
-  SDL_Rect rect;
-  rect.x = int(transf->position.x);
-  rect.y = int(transf->position.y);
-  rect.w = 3;
-  rect.h = 3;
-
-  m_trail.push_back(rect);
-
-  
 }
 
 void PlayerSystem::draw(ECSContext& context) {
@@ -260,15 +247,6 @@ void PlayerSystem::draw(ECSContext& context) {
 
   drawSprite(model->sprite, round(transf->position.x), round(transf->position.y),
              model->alpha, round(transf->scale), transf->angle);
-
-  int totalSize = m_trail.size();
-  int counter = 0;
-  for(SDL_Rect& rect: m_trail) {
-    int alpha = int(255.0f * (1.0f -  float(counter) / float(totalSize)));
-    drawRect(rect.x, rect.y, rect.w, rect.h,
-             135, 135, 135, alpha, true);
-  }
-
 }
 
 void PlayerSystem::onWeaponPickup(Message message) {
@@ -455,4 +433,138 @@ void EffectsSystem::onSpawnEffect(Message message) {
 
     m_effects.push_back(newEffect);
   }
+}
+
+void PhysicsCollisionSystem::update(ECSContext& context, real deltaTime) {
+  Registry* registry = context.registry;
+  Bitfield desiredComponents = buildBitfield(ComponentID::Transformation,
+                                             ComponentID::Physics);
+
+  auto entities = registry->findEntities(desiredComponents);
+
+  Message collisionMsg;
+  collisionMsg.type = int(MessageType::ON_COLLISION);
+
+  for(auto entityAIt = entities.begin(); entityAIt != entities.end(); entityAIt++) {
+    Transformation* transfA = registry->getComponent<Transformation>(*entityAIt,
+                                                                     ComponentID::Transformation);
+
+    Physics* physicsA = registry->getComponent<Physics>(*entityAIt, ComponentID::Physics);
+
+    for(auto entityBIt = std::next(entityAIt); entityBIt != entities.end(); entityBIt++) {
+
+      if(*entityAIt == *entityBIt) {
+        continue;
+      }
+
+      Transformation* transfB = registry->getComponent<Transformation>(*entityBIt,
+                                                                       ComponentID::Transformation);
+
+      Physics* physicsB = registry->getComponent<Physics>(*entityBIt, ComponentID::Physics);
+
+      real distanceAtoB = transfA->position.distance(transfB->position);
+      if(distanceAtoB < physicsA->size + physicsB->size) {
+        collisionMsg.collision_info.entityA = *entityAIt;
+        collisionMsg.collision_info.entityB = *entityBIt;
+
+        notify(collisionMsg);
+      }
+
+    }
+  }
+}
+
+void PenetrationResolutionSystem::init(ECSContext& context) {
+  registerMethod<PenetrationResolutionSystem>(int(MessageType::ON_COLLISION),
+                                              &PenetrationResolutionSystem::onCollision,
+                                              this);
+}
+
+void PenetrationResolutionSystem::update(ECSContext& context, real deltaTime) {
+  Registry* registry = context.registry;
+
+  for(auto collision: m_unprocessedCollisions) {
+    Transformation* transfA = registry->getComponent<Transformation>(collision.collision_info.entityA,
+                                                                     ComponentID::Transformation);
+
+    Transformation* transfB = registry->getComponent<Transformation>(collision.collision_info.entityB,
+                                                                     ComponentID::Transformation);
+
+    real distance = (transfB->position - transfA->position).length();
+    vec2 direction = (transfB->position - transfA->position);
+
+    if(distance > 0.01) {
+      direction.x /= distance;
+      direction.y /= distance;
+
+      // TODO(mizofix): penetration based on mass
+      transfA->position -= direction * (distance * 0.5f);
+      transfB->position += direction * (distance * 0.5f);
+    }
+  }
+
+  m_unprocessedCollisions.clear();
+}
+
+void PenetrationResolutionSystem::onCollision(Message message) {
+  m_unprocessedCollisions.push_back(message);
+}
+
+void BulletSystem::init(ECSContext& context) {
+  registerMethod<BulletSystem>(int(MessageType::ON_COLLISION),
+                               &BulletSystem::onCollision,
+                               this);
+}
+
+void BulletSystem::update(ECSContext& context, real deltaTime) {
+
+  Registry* registry = context.registry;
+
+  for(auto collision: m_unprocessedCollisions) {
+    Entity bullet = Constants::INVALID_ENTITY;
+    Entity object = Constants::INVALID_ENTITY;
+
+    if(registry->hasComponent(collision.collision_info.entityA, ComponentID::Bullet)) {
+      bullet = collision.collision_info.entityA;
+      object = collision.collision_info.entityB;
+    }
+    else if(registry->hasComponent(collision.collision_info.entityB, ComponentID::Bullet)) {
+      bullet = collision.collision_info.entityB;
+      object = collision.collision_info.entityA;
+    }
+
+    if(bullet != Constants::INVALID_ENTITY && registry->hasComponent(object, ComponentID::Zombie)) {
+      Bullet* bulletComponent = registry->getComponent<Bullet>(bullet, ComponentID::Bullet);
+      Zombie* zombie = registry->getComponent<Zombie>(object, ComponentID::Zombie);
+
+      //zombie->health -= bulletComponent->damage; or notify?
+
+      // TODO(mizofix): generate an effect
+
+      bulletComponent->durability--;
+      if(bulletComponent->durability <= 0) {
+        registry->destroyEntity(bullet);
+      }
+
+
+    }
+
+  }
+
+  Bitfield desiredComponents = buildBitfield(ComponentID::Bullet);
+  auto bullets = registry->findEntities(desiredComponents);
+  for(auto bullet: bullets) {
+    Bullet* bulletComponent = registry->getComponent<Bullet>(bullet, ComponentID::Bullet);
+    bulletComponent->elapsedTime -= deltaTime;
+
+    if(bulletComponent->elapsedTime > bulletComponent->lifetime) {
+      registry->destroyEntity(bullet);
+    }
+  }
+
+  m_unprocessedCollisions.clear();
+}
+
+void BulletSystem::onCollision(Message message) {
+  m_unprocessedCollisions.push_back(message);
 }

@@ -20,7 +20,7 @@ bool Bitset::isSet(Bitfield bit) const {
 }
 
 bool Bitset::isSetBits(Bitfield bits) const {
-  return m_bits & bits;
+  return (m_bits & bits) == bits;
 }
 
 void Bitset::clear() {
