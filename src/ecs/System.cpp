@@ -5,6 +5,25 @@
 
 #include <fstream>
 
+
+static void generateEffect(EffectType type, vec2 position,
+                           real scale, real angle, real lifetime,
+                           bool fadeout) {
+  Message msg;
+  msg.type = int(MessageType::SPAWN_EFFECT);
+  msg.effect_info.type = type;
+  msg.effect_info.x = position.x;
+  msg.effect_info.y = position.y;
+  msg.effect_info.scale = scale;
+  msg.effect_info.angle = angle;
+  msg.effect_info.lifetime = lifetime;
+  msg.effect_info.fadeOut = fadeout;
+
+  notify(msg);
+
+}
+
+
 void TrailSystem::update(ECSContext& context, real deltaTime) {
 
   Registry* registry = context.registry;
@@ -266,7 +285,7 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
     if(m_lastFootprintElapsedTime > 0.35 && !physics->idling) {
       m_lastFootprintElapsedTime = 0.0f;
 
-      generateFootprint(transf->position, transf->angle);
+      generateEffect(EffectType::FOOTPRINT, transf->position, 1.0f, transf->angle, 5.0f, true);
 
     }
   } else {
@@ -302,21 +321,6 @@ void PlayerSystem::onPowerupPickup(Message message) {
 
 void PlayerSystem::onMouseWheel(Message message) {
   m_lastFrameMouseWheel = message.wheel.y;
-}
-
-void PlayerSystem::generateFootprint(vec2 position, real angle) {
-  Message msg;
-  msg.type = int(MessageType::SPAWN_EFFECT);
-  msg.effect_info.type = EffectType::FOOTPRINT;
-  msg.effect_info.x = position.x;
-  msg.effect_info.y = position.y;
-  msg.effect_info.scale = 1.0f;
-  msg.effect_info.angle = angle;
-  msg.effect_info.lifetime = 5.0f;
-  msg.effect_info.fadeOut = true;
-
-  notify(msg);
-
 }
 
 real PlayerSystem::getPlayerViewDirection() {
@@ -363,6 +367,7 @@ void ZombieSystem::init(ECSContext& context) {
   physics->maxSpeed = 50.0f;
 
   Zombie* zombieComponent = new Zombie();
+  zombieComponent->wanderingTarget = transf->position;
   zombieComponent->fov = cos(degToRad(45.0f));
   zombieComponent->hearingDistance = 50.0f;
   zombieComponent->attackDistance = 70.0f;
@@ -413,9 +418,8 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
       vecToPlayer.y /= distanceToPlayer;
     }
 
-
     if(zombieComponent->attacking) {
-
+      zombieTransform->angle = vecToDeg(vecToPlayer);
       continue;
     }
 
@@ -434,8 +438,8 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
       else {
         // TODO(mizofix): predict player path
         zombiePhysics->velocity = vecToPlayer * zombiePhysics->maxSpeed;
-        //        zombiePhysics->acceleration = vecToPlayer * 15.0f;
         zombieTransform->angle = vecToDeg(vecToPlayer);
+        //        zombiePhysics->acceleration = vecToPlayer * 15.0f;
 
       }
 
@@ -452,8 +456,38 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
 
       }
 
+      else {
+
+        vec2 vecToTarget = zombieComponent->wanderingTarget - zombieTransform->position;
+        real distanceToTarget = vecToTarget.length();
+        vecToTarget.x /= distanceToTarget;
+        vecToTarget.y /= distanceToTarget;
+
+        if(distanceToTarget > 50.0f) {
+          zombiePhysics->velocity = vecToTarget * zombiePhysics->maxSpeed;
+          zombieTransform->angle = vecToDeg(vecToTarget);
+        } else {
+          zombieComponent->wanderingElapsedTime += deltaTime;
+          if(zombieComponent->wanderingElapsedTime > 2.5f) {
+              real rndX = randomReal(-200.0f, 200.0f);
+              real rndY = randomReal(-200.0f, 200.0f);
+              zombieComponent->wanderingTarget = zombieTransform->position + vec2(rndX, rndY);
+              zombieComponent->wanderingElapsedTime = 0.0f;
+          }
+        }
+
+      }
+
     }
 
+    if(!zombiePhysics->idling) {
+      zombieComponent->elapsedFootprintTime += deltaTime;
+      if(zombieComponent->elapsedFootprintTime > 0.5f) {
+        generateEffect(EffectType::FOOTPRINT, zombieTransform->position, 1.0f, zombieTransform->angle, 7.0f, true);
+
+        zombieComponent->elapsedFootprintTime = 0.0f;
+      }
+    }
   }
 
 
@@ -648,8 +682,8 @@ void PenetrationResolutionSystem::update(ECSContext& context, real deltaTime) {
 
   for(auto collision: m_unprocessedCollisions) {
     if(registry->hasComponent(collision.collision_info.entityA, ComponentID::Bullet) ||
-       registry->hasComponent(collision.collision_info.entityB, ComponentID::Player) ||
-       registry->hasComponent(collision.collision_info.entityA, ComponentID::Bullet) ||
+       registry->hasComponent(collision.collision_info.entityA, ComponentID::Player) ||
+       registry->hasComponent(collision.collision_info.entityB, ComponentID::Bullet) ||
        registry->hasComponent(collision.collision_info.entityB, ComponentID::Player)) {
       continue;
     }
@@ -709,7 +743,10 @@ void BulletSystem::update(ECSContext& context, real deltaTime) {
 
       //zombie->health -= bulletComponent->damage; or notify?
 
-      // TODO(mizofix): generate an effect
+      Transformation* zombieTransf = registry->getComponent<Transformation>(object, ComponentID::Transformation);
+
+      generateEffect(EffectType::BLOOD_1, zombieTransf->position, 1.0f, zombieTransf->angle, 3.0f, true);
+
 
       bulletComponent->durability--;
       if(bulletComponent->durability <= 0) {

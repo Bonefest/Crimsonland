@@ -8,7 +8,7 @@
 
 CrimsonlandFramework::CrimsonlandFramework(int argc, char** commands): m_lastTime(0.0f) {
   m_worldData = parseCommands(argc, commands);
-  m_worldData.maxEffectsNumber = 10;
+  m_worldData.maxEffectsNumber = 100;
   m_worldData.maxPlayerSpeed = 100.0f;
 
   info("-------------------------\n");
@@ -65,8 +65,9 @@ void CrimsonlandFramework::initECS() {
   m_context.data = m_worldData;
 
   m_systemManager.addSystem(m_context, new PhysicsIntegrationSystem());
-  // m_systemManager.addSystem(m_context, new PhysicsCollisionSystem());
-  // m_systemManager.addSystem(m_context, new PenetrationResolutionSystem());
+  m_systemManager.addSystem(m_context, new PhysicsCollisionSystem());
+  m_systemManager.addSystem(m_context, new PenetrationResolutionSystem());
+  m_systemManager.addSystem(m_context, new BulletSystem());
 
   m_systemManager.addSystem(m_context, new TrailSystem());
   m_systemManager.addSystem(m_context, new EffectsSystem());

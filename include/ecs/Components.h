@@ -177,7 +177,8 @@ struct Zombie: Component {
             attackDistance(0.0f),
             followingDistance(0.0f),
             sawPlayerRecently(false),
-            attacking(false){ }
+            attacking(false),
+            elapsedFootprintTime(0.0f) { }
 
 
   virtual ComponentID getID() {
@@ -187,6 +188,9 @@ struct Zombie: Component {
   StateController* stateController;
 
   // NOTE(mizofix): fov stores as a cos value
+  vec2             wanderingTarget;
+  real             wanderingElapsedTime;
+
   real             fov;
   real             hearingDistance;
   real             attackDistance;
@@ -194,6 +198,7 @@ struct Zombie: Component {
   bool             sawPlayerRecently;
   bool             attacking;
 
+  real             elapsedFootprintTime;
 };
 
 

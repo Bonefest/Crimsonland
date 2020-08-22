@@ -23,7 +23,7 @@ void ZombieWalk::onEnter(ECSContext& context, Entity zombie) {
   Model* model = registry->getComponent<Model>(zombie, ComponentID::Model);
 
   char animationName[32];
-  sprintf(animationName, "zombie_walk%d", rand() % 1 + 1);
+  sprintf(animationName, "zombie_walk%d", rand() % 2 + 1);
   setAnimation(model->sprite, animationName);
 }
 

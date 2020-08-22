@@ -59,7 +59,6 @@ private:
   WeaponData parseWeapon(nlohmann::json& parser);
   void checkCurrentWeapon(Player* player);
 
-  void generateFootprint(vec2 position, real angle);
   real getPlayerViewDirection();
   Entity getPlayer(ECSContext& context);
 
