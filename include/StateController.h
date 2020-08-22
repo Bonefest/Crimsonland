@@ -21,7 +21,6 @@ public:
     }
 
     auto stateIt = m_states.find(Family::id<State>());
-    std::size_t id = Family::id<State>();
     if(stateIt == m_states.end()) {
       m_currentState = new State();
       m_currentState->setOwner(this);

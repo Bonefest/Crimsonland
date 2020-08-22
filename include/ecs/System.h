@@ -69,7 +69,23 @@ private:
   int m_lastFrameMouseWheel;
 };
 
-class ZombieRenderingSystem: public System {
+// class LevelSystem {
+
+// }
+
+class ZombieSystem: public System {
+public:
+  virtual void init(ECSContext& context);
+  virtual void update(ECSContext& context, real deltaTime);
+  //virtual void draw(ECSContext& context);
+
+
+  void onGenerateZombie(Message message);
+private:
+  Bitfield m_zombieComponents;
+};
+
+class ModelRenderingSystem: public System {
 public:
   virtual void draw(ECSContext& context);
 };

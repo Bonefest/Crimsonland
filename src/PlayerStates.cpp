@@ -176,6 +176,7 @@ Entity PlayerShoot::generateBullet(Registry* registry,
   Physics* physics = new Physics();
   physics->velocity = direction * data.speed;
   physics->size = data.bulletSize;
+  physics->maxSpeed = data.speed;
 
   Transformation* transformation = new Transformation();
   transformation->position = position;

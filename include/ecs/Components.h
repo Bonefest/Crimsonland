@@ -103,6 +103,7 @@ struct Physics: Component {
 
   real mass;
   real damping;
+  real maxSpeed;
 
   real size;
 
@@ -164,20 +165,38 @@ struct Bullet: Component {
 
 };
 
+#include "StateController.h"
+
+class StateController;
+
+
 struct Zombie: Component {
+
+  Zombie(): fov(0.0f),
+            hearingDistance(0.0f),
+            attackDistance(0.0f),
+            followingDistance(0.0f),
+            sawPlayerRecently(false),
+            attacking(false){ }
+
 
   virtual ComponentID getID() {
     return ComponentID::Zombie;
   }
 
-  bool isDead;
+  StateController* stateController;
+
+  // NOTE(mizofix): fov stores as a cos value
+  real             fov;
+  real             hearingDistance;
+  real             attackDistance;
+  real             followingDistance;
+  bool             sawPlayerRecently;
+  bool             attacking;
 
 };
 
 
-#include "StateController.h"
-
-class StateController;
 
 struct Player: Component {
 

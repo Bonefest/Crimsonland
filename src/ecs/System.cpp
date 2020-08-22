@@ -1,5 +1,6 @@
 #include "ecs/System.h"
 #include "PlayerStates.h"
+#include "ZombieStates.h"
 #include "Utils.h"
 
 #include <fstream>
@@ -128,6 +129,7 @@ void PlayerSystem::init(ECSContext& context) {
   Physics* physics = new Physics();
   physics->mass = 100.0f;
   physics->size = 32.0f;
+  physics->maxSpeed = context.data.maxPlayerSpeed;
 
   Player* playerComponent = new Player();
   initWeapons(playerComponent);
@@ -215,13 +217,13 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
     acceleration -= side * context.data.maxPlayerSpeed;
   }
   if(isKeyPressed(FRKey::RIGHT)) {
-    acceleration += side * context.data.maxPlayerSpeed;
+    acceleration += side * context.data.maxPlayerSpeed * 0.75f;
   }
   if(isKeyPressed(FRKey::UP)) {
-    acceleration += heading * context.data.maxPlayerSpeed;
+    acceleration += heading * context.data.maxPlayerSpeed * 0.75f;
   }
   if(isKeyPressed(FRKey::DOWN)) {
-    acceleration -= heading * context.data.maxPlayerSpeed;
+    acceleration -= heading * context.data.maxPlayerSpeed * 0.5f;
   }
   if(m_lastFrameMouseWheel != 0) {
     std::size_t weaponsSize = playerComponent->weapons.size();
@@ -288,13 +290,6 @@ void PlayerSystem::checkCurrentWeapon(Player* player) {
 void PlayerSystem::draw(ECSContext& context) {
   // TODO(mizofix): player hp-bar rendering
 
-  Registry* registry = context.registry;
-  Entity player = getPlayer(context);
-  Model* model = registry->getComponent<Model>(player, ComponentID::Model);
-  Transformation* transf = registry->getComponent<Transformation>(player, ComponentID::Transformation);
-
-  drawSprite(model->sprite, round(transf->position.x), round(transf->position.y),
-             model->alpha, round(transf->scale), transf->angle);
 }
 
 void PlayerSystem::onWeaponPickup(Message message) {
@@ -346,25 +341,139 @@ Entity PlayerSystem::getPlayer(ECSContext& context) {
 }
 
 
-void ZombieRenderingSystem::draw(ECSContext& context) {
+void ZombieSystem::init(ECSContext& context) {
+  m_zombieComponents = buildBitfield(ComponentID::Model,
+                                     ComponentID::Transformation,
+                                     ComponentID::Physics,
+                                     ComponentID::Zombie);
+
+  Registry* registry = context.registry;
+  Entity zombie = registry->createEntity();
+
+  Model* model = new Model();
+  model->sprite = createSprite("zombie_idle");
+  model->alpha = 255;
+
+  Transformation* transf = new Transformation();
+  transf->position = vec2(300.0f, 300.0f);
+  transf->angle = 0.0f;
+
+  Physics* physics = new Physics();
+  physics->size = 50.0f;
+  physics->maxSpeed = 50.0f;
+
+  Zombie* zombieComponent = new Zombie();
+  zombieComponent->fov = cos(degToRad(45.0f));
+  zombieComponent->hearingDistance = 50.0f;
+  zombieComponent->attackDistance = 70.0f;
+  zombieComponent->followingDistance = 250.0f;
+  zombieComponent->sawPlayerRecently = false;
+  zombieComponent->stateController = new StateController();
+
+  registry->addComponent(zombie, model);
+  registry->addComponent(zombie, transf);
+  registry->addComponent(zombie, physics);
+  registry->addComponent(zombie, zombieComponent);
+
+  zombieComponent->stateController->setState<ZombieIdle>(context, zombie);
+}
+
+void ZombieSystem::update(ECSContext& context, real deltaTime) {
+  Registry* registry = context.registry;
+
+  Bitfield playerComponents = buildBitfield(ComponentID::Transformation,
+                                            ComponentID::Physics,
+                                            ComponentID::Player);
+
+  auto players = registry->findEntities(playerComponents);
+  Assert(!players.empty());
+
+  Entity player = players.front();
+  Transformation* playerTransfrom = registry->getComponent<Transformation>(player,
+                                                                           ComponentID::Transformation);
+  Physics* playerPhysics = registry->getComponent<Physics>(player, ComponentID::Physics);
+  Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
+
+  vec2 playerDirection = degToVec(playerTransfrom->angle);
+
+  // TODO(mizofix): calculate fov based on player alpha
+  auto zombies = registry->findEntities(m_zombieComponents);
+  for(auto zombie: zombies) {
+    Transformation* zombieTransform = registry->getComponent<Transformation>(zombie,
+                                                                             ComponentID::Transformation);
+    Zombie* zombieComponent = registry->getComponent<Zombie>(zombie, ComponentID::Zombie);
+    Physics* zombiePhysics = registry->getComponent<Physics>(zombie, ComponentID::Physics);
+
+    zombieComponent->stateController->update(context, zombie, deltaTime);
+
+    vec2 vecToPlayer = playerTransfrom->position - zombieTransform->position;
+    real distanceToPlayer = vecToPlayer.length();
+    if(distanceToPlayer > 0.01) {
+      vecToPlayer.x /= distanceToPlayer;
+      vecToPlayer.y /= distanceToPlayer;
+    }
+
+
+    if(zombieComponent->attacking) {
+
+      continue;
+    }
+
+
+    if(zombieComponent->sawPlayerRecently && distanceToPlayer  > zombieComponent->followingDistance) {
+      zombieComponent->sawPlayerRecently = false;
+      zombiePhysics->velocity = vec2();
+      zombieComponent->stateController->setState<ZombieIdle>(context, zombie);
+    }
+    else if(zombieComponent->sawPlayerRecently) {
+      // NOTE(mizofix): if zombie close enough to attack a player
+      if(distanceToPlayer < zombieComponent->attackDistance) {
+        zombieComponent->stateController->setState<ZombieAttack>(context, zombie);
+        zombiePhysics->velocity = vec2();
+      }
+      else {
+        // TODO(mizofix): predict player path
+        zombiePhysics->velocity = vecToPlayer * zombiePhysics->maxSpeed;
+        //        zombiePhysics->acceleration = vecToPlayer * 15.0f;
+        zombieTransform->angle = vecToDeg(vecToPlayer);
+
+      }
+
+    } else {
+
+      real relativeDirection = degToVec(zombieTransform->angle).dot(vecToPlayer);
+
+      // NOTE(mizofix): if zombie hears or see a player
+      if(distanceToPlayer < zombieComponent->hearingDistance ||
+         (relativeDirection >= zombieComponent->fov &&
+          distanceToPlayer < zombieComponent->followingDistance)) {
+
+        zombieComponent->sawPlayerRecently = true;
+
+      }
+
+    }
+
+  }
+
+
+}
+
+void ModelRenderingSystem::draw(ECSContext& context) {
+
   Registry* registry = context.registry;
 
   Bitfield desiredComponents = buildBitfield(ComponentID::Model,
                                              ComponentID::Transformation);
 
-  EntitiesContainer entities = registry->findEntities(desiredComponents);
-  for(auto entity: entities) {
-    Transformation* transformation = registry->getComponent<Transformation>(entity, ComponentID::Transformation);
-    Model* model = registry->getComponent<Model>(entity, ComponentID::Model);
-    Attributes* attributes = registry->getComponent<Attributes>(entity, ComponentID::Attributes);
-    // TODO(mizofix): draw hp bar
+  auto entities = registry->findEntities(desiredComponents);
 
-    // drawSprite(model->sprite,
-    //            round(transformation->position.x),
-    //            round(transformation->position.y),
-    //            model->alpha,
-    //            transformation->angle,
-    //            transformation->scale);
+  for(auto entity: entities) {
+    Model* model = registry->getComponent<Model>(entity, ComponentID::Model);
+    Transformation* transf = registry->getComponent<Transformation>(entity, ComponentID::Transformation);
+
+    drawSprite(model->sprite, round(transf->position.x), round(transf->position.y),
+               model->alpha, round(transf->scale), transf->angle);
 
   }
 }
@@ -385,15 +494,20 @@ void PhysicsIntegrationSystem::update(ECSContext& context, real deltaTime) {
     vec2 newVelocity = (physics->velocity + physics->acceleration * deltaTime) * physics->damping;
     real newSpeed = newVelocity.length();
     real previousSpeed = physics->velocity.length();
-    if(newSpeed < previousSpeed && newSpeed < 0.01 && !physics->idling) {
+    if(newSpeed <= previousSpeed && newSpeed < 0.01 && !physics->idling) {
       physics->velocity = vec2();
       physics->transition = true;
       physics->idling = true;
     }
     else {
-      if(newSpeed > previousSpeed && newSpeed > 0.01 && physics->idling) {
+      if(newSpeed >= previousSpeed && newSpeed > 0.01 && physics->idling) {
         physics->transition = true;
         physics->idling = false;
+      }
+
+      if(newSpeed > physics->maxSpeed) {
+        newVelocity.x = (newVelocity.x / newSpeed) * physics->maxSpeed;
+        newVelocity.y = (newVelocity.y / newSpeed) * physics->maxSpeed;
       }
 
       physics->velocity = newVelocity;
@@ -533,6 +647,13 @@ void PenetrationResolutionSystem::update(ECSContext& context, real deltaTime) {
   Registry* registry = context.registry;
 
   for(auto collision: m_unprocessedCollisions) {
+    if(registry->hasComponent(collision.collision_info.entityA, ComponentID::Bullet) ||
+       registry->hasComponent(collision.collision_info.entityB, ComponentID::Player) ||
+       registry->hasComponent(collision.collision_info.entityA, ComponentID::Bullet) ||
+       registry->hasComponent(collision.collision_info.entityB, ComponentID::Player)) {
+      continue;
+    }
+
     Transformation* transfA = registry->getComponent<Transformation>(collision.collision_info.entityA,
                                                                      ComponentID::Transformation);
 

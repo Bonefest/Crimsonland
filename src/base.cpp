@@ -9,7 +9,7 @@
 CrimsonlandFramework::CrimsonlandFramework(int argc, char** commands): m_lastTime(0.0f) {
   m_worldData = parseCommands(argc, commands);
   m_worldData.maxEffectsNumber = 10;
-  m_worldData.maxPlayerSpeed = 25.0f;
+  m_worldData.maxPlayerSpeed = 100.0f;
 
   info("-------------------------\n");
   info("final world data values are:\n");
@@ -40,7 +40,9 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
-  if(!loadAnimations("data/animations.json") || !loadAnimations("data/trees/trees.json")) {
+  if(!loadAnimations("data/animations.json") ||
+     !loadAnimations("data/zombies/zombie.json") ||
+     !loadAnimations("data/trees/trees.json")) {
     return false;
   }
 
@@ -63,10 +65,14 @@ void CrimsonlandFramework::initECS() {
   m_context.data = m_worldData;
 
   m_systemManager.addSystem(m_context, new PhysicsIntegrationSystem());
+  // m_systemManager.addSystem(m_context, new PhysicsCollisionSystem());
+  // m_systemManager.addSystem(m_context, new PenetrationResolutionSystem());
+
   m_systemManager.addSystem(m_context, new TrailSystem());
   m_systemManager.addSystem(m_context, new EffectsSystem());
   m_systemManager.addSystem(m_context, new PlayerSystem());
-  m_systemManager.addSystem(m_context, new ZombieRenderingSystem());
+  m_systemManager.addSystem(m_context, new ZombieSystem());
+  m_systemManager.addSystem(m_context, new ModelRenderingSystem());
 
   m_uiSystem = new UIRenderingSystem();
   m_uiSystem->init(m_context);
