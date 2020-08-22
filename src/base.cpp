@@ -8,11 +8,14 @@
 
 CrimsonlandFramework::CrimsonlandFramework(int argc, char** commands): m_lastTime(0.0f) {
   m_worldData = parseCommands(argc, commands);
-  m_worldData.maxEffectsNumber = 100;
+  m_worldData.maxEffectsNumber = 100000;
   m_worldData.maxPlayerSpeed = 100.0f;
   m_worldData.maxPlayerHealth = 200.0f;
   m_worldData.maxPlayerStamina = 100.0f;
   m_worldData.regenSpeed = 5.0f;
+  m_worldData.roundData.currentRoundNumber = 1;
+  m_worldData.roundData.elapsedTime = 0.0f;
+  m_worldData.roundData.intermissionActivated = false;
 
   info("-------------------------\n");
   info("final world data values are:\n");
@@ -66,6 +69,8 @@ bool CrimsonlandFramework::Init() {
 void CrimsonlandFramework::initECS() {
   m_context.registry = &m_registry;
   m_context.data = m_worldData;
+
+  m_systemManager.addSystem(m_context, new LevelSystem());
 
   m_systemManager.addSystem(m_context, new PhysicsIntegrationSystem());
   m_systemManager.addSystem(m_context, new PhysicsCollisionSystem());

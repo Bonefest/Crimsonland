@@ -13,6 +13,12 @@
 #define info(...)
 #endif
 
+struct RoundData {
+  int  currentRoundNumber;
+  real elapsedTime;
+
+  bool intermissionActivated;
+};
 
 struct WorldData {
 
@@ -31,6 +37,9 @@ struct WorldData {
   real regenSpeed;
 
   uint32_t maxEffectsNumber;
+
+  RoundData roundData;
+
 };
 
 enum class WeaponType {

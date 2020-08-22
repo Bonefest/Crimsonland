@@ -8,3 +8,15 @@ Component* componentFactory(ComponentID component) {
 
   return nullptr;
 }
+
+Zombie::~Zombie() {
+  if(stateController != nullptr) {
+    delete stateController;
+  }
+}
+
+Player::~Player() {
+  if(stateController != nullptr) {
+    delete stateController;
+  }
+}

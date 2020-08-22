@@ -185,6 +185,8 @@ struct Zombie: Component {
             sawPlayerRecently(false),
             attacking(false) { }
 
+  ~Zombie();
+
   virtual ComponentID getID() {
     return ComponentID::Zombie;
   }
@@ -207,13 +209,8 @@ struct Zombie: Component {
 
 struct Player: Component {
 
-   Player(): stateController(nullptr) { }
-
-  ~Player() {
-    if(stateController != nullptr) {
-      delete stateController;
-    }
-  }
+  Player(): stateController(nullptr) { }
+  ~Player();
 
   ComponentID getID() {
     return ComponentID::Player;

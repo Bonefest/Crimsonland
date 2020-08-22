@@ -48,7 +48,6 @@ class PlayerSystem: public System {
 public:
   virtual void init(ECSContext& context);
   virtual void update(ECSContext& context, real deltaTime);
-  virtual void draw(ECSContext& context);
 
   void onWeaponPickup(Message message);
   void onPowerupPickup(Message message);
@@ -69,10 +68,6 @@ private:
   std::list<Message> m_unprocessedZombieAttacks;
 };
 
-// class LevelSystem {
-
-// }
-
 class ZombieSystem: public System {
 public:
   virtual void init(ECSContext& context);
@@ -82,6 +77,25 @@ public:
 private:
   Bitfield m_zombieComponents;
 };
+
+
+class LevelSystem: public System {
+public:
+  virtual void update(ECSContext& context, real deltaTime);
+
+private:
+  void generateZombie(ECSContext& context, const vec2& playerPos);
+  real m_elapsedTimeFromLastGeneration;
+
+};
+
+class NotificationSystem {
+public:
+  virtual void init(ECSContext& context);
+  virtual void update(ECSContext& context, real deltaTime);
+
+};
+
 
 class FootprintGenerationSystem: public System {
 public:

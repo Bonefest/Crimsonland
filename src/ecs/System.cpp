@@ -352,11 +352,6 @@ void PlayerSystem::checkCurrentWeapon(Player* player) {
 }
 
 
-void PlayerSystem::draw(ECSContext& context) {
-  // TODO(mizofix): player hp-bar rendering
-
-}
-
 void PlayerSystem::onWeaponPickup(Message message) {
 
 }
@@ -529,6 +524,20 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
               real rndX = randomReal(-200.0f, 200.0f);
               real rndY = randomReal(-200.0f, 200.0f);
               zombieComponent->wanderingTarget = zombieTransform->position + vec2(rndX, rndY);
+              if(zombieComponent->wanderingTarget.x < -context.data.mapWidth * 0.5f) {
+                zombieComponent->wanderingTarget.x = -context.data.mapWidth * 0.5f + randomReal(0.0f, 200.0f);
+              }
+              else if(zombieComponent->wanderingTarget.x > context.data.mapWidth * 0.5f) {
+                zombieComponent->wanderingTarget.x = context.data.mapWidth * 0.5f - randomReal(0.0f, 200.0f);
+              }
+
+              if(zombieComponent->wanderingTarget.y < -context.data.mapHeight * 0.5f) {
+                zombieComponent->wanderingTarget.y = -context.data.mapHeight * 0.5f + randomReal(0.0f, 200.0f);
+              }
+              else if(zombieComponent->wanderingTarget.y > context.data.mapHeight * 0.5f) {
+                zombieComponent->wanderingTarget.y = context.data.mapHeight * 0.5f - randomReal(0.0f, 200.0f);
+              }
+
               zombieComponent->wanderingElapsedTime = 0.0f;
           }
         }
@@ -543,6 +552,135 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
     registry->destroyEntity(zombie);
   }
 
+
+}
+
+void LevelSystem::update(ECSContext& context, real deltaTime) {
+
+  Registry* registry = context.registry;
+
+  Bitfield playerBitfield = buildBitfield(ComponentID::Transformation,
+                                          ComponentID::Player);
+
+  Entity player = getPlayer(registry, playerBitfield);
+
+  Transformation* playerTransf = context.registry->getComponent<Transformation>(player,
+                                                                                ComponentID::Transformation);
+
+
+  context.data.roundData.elapsedTime += deltaTime;
+
+  if(context.data.roundData.intermissionActivated) {
+    if(context.data.roundData.elapsedTime > 20.0f) {
+      // notify round has begun
+      context.data.roundData.intermissionActivated = false;
+      context.data.roundData.elapsedTime = 0.0f;
+    }
+  }
+  else {
+
+    Bitfield zombieComponents = buildBitfield(ComponentID::Zombie,
+                                              ComponentID::Attributes,
+                                              ComponentID::Transformation);
+
+    auto zombies = registry->findEntities(zombieComponents);
+
+    int currentRound = context.data.roundData.currentRoundNumber;
+    real roundLength = currentRound * 30.0f + 60.0f;
+
+    if(context.data.roundData.elapsedTime > roundLength) {
+
+      context.data.roundData.intermissionActivated = true;
+      context.data.roundData.elapsedTime = 0.0f;
+      context.data.roundData.currentRoundNumber++;
+
+      for(auto zombie: zombies) {
+
+        Attributes* zombieAttributes = registry->getComponent<Attributes>(zombie,
+                                                                          ComponentID::Attributes);
+
+        zombieAttributes->health = -100.0f;
+
+      }
+
+    } else {
+
+      int zombiesMaxCount = currentRound * 10 + 25;
+      
+      if(zombies.size() < zombiesMaxCount) {
+        real zombieSpawnTime = std::max(1.0f - real(currentRound) * 0.1f, 0.5f);
+        if(m_elapsedTimeFromLastGeneration < zombieSpawnTime) {
+          generateZombie(context, playerTransf->position);
+          m_elapsedTimeFromLastGeneration = 0.0f;
+        }
+      }
+
+      for(auto zombie: zombies) {
+        Transformation* zombieTransf = registry->getComponent<Transformation>(zombie,
+                                                                              ComponentID::Transformation);
+
+        if(playerTransf->position.distance(zombieTransf->position) > 2000.0f) {
+          registry->destroyEntity(zombie);
+        }
+
+      }
+
+    }
+
+  }
+
+
+
+}
+
+void LevelSystem::generateZombie(ECSContext& context, const vec2& playerPos) {
+
+  Registry* registry = context.registry;
+  Entity zombie = registry->createEntity();
+
+  real currentRound = context.data.roundData.currentRoundNumber;
+
+  Model* model = new Model();
+  model->sprite = createSprite("zombie_idle");
+  model->alpha = int(randomReal(200.0f, 255.0f));
+
+  Transformation* transf = new Transformation();
+
+  vec2 zombiePosition = playerPos;
+  while((zombiePosition - playerPos).sqLength() < context.data.windowWidth * context.data.windowHeight) {
+    zombiePosition.x = randomReal(-context.data.windowWidth, context.data.windowWidth) + playerPos.x;
+    zombiePosition.y = randomReal(-context.data.windowHeight, context.data.windowHeight) + playerPos.y;
+  }
+
+  transf->position = zombiePosition;
+  transf->angle = randomReal(0.0f, 360.0f);
+  transf->scale = randomReal(0.8f, 1.2f);
+
+  Physics* physics = new Physics();
+  physics->size = 15.0f * transf->scale;
+  physics->maxSpeed = 50.0f + 10.0f * currentRound;
+
+  Zombie* zombieComponent = new Zombie();
+  zombieComponent->wanderingTarget = transf->position;
+  zombieComponent->fov = cos(degToRad(std::min(45.0f + 5.0f * currentRound, 160.0f)));
+  zombieComponent->hearingDistance = 50.0f + 35.0f * currentRound;
+  zombieComponent->attackDistance = 70.0f;
+  zombieComponent->followingDistance = 350.0f + 50.0f * currentRound;
+  zombieComponent->sawPlayerRecently = false;
+  zombieComponent->stateController = new StateController();
+
+  Attributes* attributes = new Attributes();
+  attributes->maxHealth = 100.0f + 100.0f * currentRound;
+  attributes->health = attributes->maxHealth;
+  attributes->damage = 5.0f + 2.5f * currentRound;
+
+  registry->addComponent(zombie, model);
+  registry->addComponent(zombie, transf);
+  registry->addComponent(zombie, physics);
+  registry->addComponent(zombie, zombieComponent);
+  registry->addComponent(zombie, attributes);
+
+  zombieComponent->stateController->setState<ZombieIdle>(context, zombie);  
 
 }
 
@@ -790,10 +928,17 @@ void PenetrationResolutionSystem::update(ECSContext& context, real deltaTime) {
     Transformation* transfA = registry->getComponent<Transformation>(collision.collision_info.entityA,
                                                                      ComponentID::Transformation);
 
+    Physics* physicsA = registry->getComponent<Physics>(collision.collision_info.entityA,
+                                                        ComponentID::Physics);
+
     Transformation* transfB = registry->getComponent<Transformation>(collision.collision_info.entityB,
                                                                      ComponentID::Transformation);
+    Physics* physicsB = registry->getComponent<Physics>(collision.collision_info.entityB,
+                                                        ComponentID::Physics);
+
 
     real distance = (transfB->position - transfA->position).length();
+    real totalSize = physicsA->size + physicsB->size;
     vec2 direction = (transfB->position - transfA->position);
 
     if(distance > 0.01) {
@@ -801,8 +946,11 @@ void PenetrationResolutionSystem::update(ECSContext& context, real deltaTime) {
       direction.y /= distance;
 
       // TODO(mizofix): penetration based on mass
-      transfA->position -= direction * (distance * 0.5f);
-      transfB->position += direction * (distance * 0.5f);
+      transfA->position -= direction * ((totalSize - distance) * 0.5f);
+      transfB->position += direction * ((totalSize - distance) * 0.5f);
+
+      // physicsA->velocity = direction * (-physicsA->maxSpeed);
+      // physicsB->velocity = direction * physicsB->maxSpeed;
     }
   }
 
