@@ -1,10 +1,11 @@
 #include "ecs/System.h"
+#include "PlayerStates.h"
 #include "Utils.h"
 
 #include <fstream>
 
 void TrailSystem::update(ECSContext& context, real deltaTime) {
-  
+
   Registry* registry = context.registry;
 
   Bitfield desiredComponents = buildBitfield(ComponentID::Trail);
@@ -146,8 +147,8 @@ void PlayerSystem::init(ECSContext& context) {
                                    ComponentID::Player,
                                    ComponentID::Physics);
 
-  playerComponent->stateController = new PlayerStateController();
-  playerComponent->stateController->init(context, player);
+  playerComponent->stateController = new StateController();
+  playerComponent->stateController->setState<PlayerIdle>(context, player);
 
 }
 
@@ -235,9 +236,9 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
       checkCurrentWeapon(playerComponent);
 
       if(physics->idling) {
-        playerComponent->stateController->setState(context, player, PlayerState::Idle);
+        playerComponent->stateController->setState<PlayerIdle>(context, player);
       } else {
-        playerComponent->stateController->setState(context,  player, PlayerState::Move);
+        playerComponent->stateController->setState<PlayerMove>(context,  player);
       }
     }
 

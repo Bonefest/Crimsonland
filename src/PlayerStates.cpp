@@ -2,9 +2,6 @@
 #include "PlayerStates.h"
 #include "Framework.h"
 
-void PlayerStateBase::setOwner(PlayerStateController* owner) {
-    m_owner = owner;
-}
 void PlayerIdle::onEnter(ECSContext& context, Entity player) {
   Model* model = context.registry->getComponent<Model>(player, ComponentID::Model);
   Player* playerComponent = context.registry->getComponent<Player>(player, ComponentID::Player);
@@ -35,25 +32,21 @@ void PlayerIdle::update(ECSContext& context, Entity player, real deltaTime) {
   updateAnimation(model->sprite, deltaTime);
 
   if(physics->transition && !physics->idling) {
-    m_owner->setState(context, player, PlayerState::Move);
-    return;
+    return m_owner->setState<PlayerMove>(context, player);
   }
 
   WeaponType currentWeapon = playerComponent->weapons[playerComponent->currentWeaponIndex].type;
 
   if(isButtonPressed(FRMouseButton::LEFT)) {
     if(currentWeapon != WeaponType::KNIFE) {
-      m_owner->setState(context, player, PlayerState::Shoot);
+      return m_owner->setState<PlayerShoot>(context, player);
     } else {
-      m_owner->setState(context, player, PlayerState::MeleeAttack);
+      return m_owner->setState<PlayerAttack>(context, player);
     }
-
-    return;
   }
 
   if(isButtonPressed(FRMouseButton::RIGHT)) {
-    m_owner->setState(context, player, PlayerState::MeleeAttack);
-    return;
+    return m_owner->setState<PlayerAttack>(context, player);
   }
 
 }
@@ -85,25 +78,21 @@ void PlayerMove::update(ECSContext& context, Entity player, real deltaTime) {
   updateAnimation(model->sprite, deltaTime);
 
   if(physics->transition && physics->idling) {
-    m_owner->setState(context, player, PlayerState::Idle);
-    return;
+    return m_owner->setState<PlayerIdle>(context, player);
   }
 
   WeaponType currentWeapon = playerComponent->weapons[playerComponent->currentWeaponIndex].type;
 
   if(isButtonPressed(FRMouseButton::LEFT)) {
     if(currentWeapon != WeaponType::KNIFE) {
-      m_owner->setState(context, player, PlayerState::Shoot);
+      return m_owner->setState<PlayerShoot>(context, player);
     } else {
-      m_owner->setState(context, player, PlayerState::MeleeAttack);
+      return m_owner->setState<PlayerAttack>(context, player);
     }
-
-    return;
   }
 
   if(isButtonPressed(FRMouseButton::RIGHT)) {
-    m_owner->setState(context, player, PlayerState::MeleeAttack);
-    return;
+    return m_owner->setState<PlayerAttack>(context, player);
   }
 
 }
@@ -115,13 +104,11 @@ void PlayerShoot::onEnter(ECSContext& context, Entity player) {
   WeaponData currentWeapon = playerComponent->weapons[playerComponent->currentWeaponIndex];
 
   if(currentWeapon.type == WeaponType::KNIFE || !hasAvailableAmmo(playerComponent)) {
-    m_owner->setState(context, player, PlayerState::Idle);
-    return;
+    return m_owner->setState<PlayerIdle>(context, player);
   }
 
   if(needToReload(playerComponent)) {
-    m_owner->setState(context, player, PlayerState::Reload);
-    return;
+    return m_owner->setState<PlayerReload>(context, player);
   }
 
   if(currentWeapon.type == WeaponType::PISTOL) {
@@ -158,14 +145,13 @@ void PlayerShoot::update(ECSContext& context, Entity player, real deltaTime) {
     Bullet bullet = generateBullet(context.registry, playerHeading, bulletPosition,
                                    playerComponent->weapons[playerComponent->currentWeaponIndex]);
 
-    vec2 explosionPosition = bulletPosition + playerHeading * 12.0f;
+    vec2 explosionPosition = bulletPosition + playerHeading * 11.0f;
     generateExplosion(explosionPosition, transf->angle);
     // /////////////////////
 
     playerComponent->weapons[playerComponent->currentWeaponIndex].ammo--;
     if(needToReload(playerComponent)) {
-      m_owner->setState(context, player, PlayerState::Reload);
-      return;
+      return m_owner->setState<PlayerReload>(context, player);
     }
 
     if(isButtonPressed(FRMouseButton::LEFT) && hasAvailableAmmo(playerComponent)) {
@@ -173,12 +159,11 @@ void PlayerShoot::update(ECSContext& context, Entity player, real deltaTime) {
     } else {
 
       if(physics->idling) {
-        m_owner->setState(context, player, PlayerState::Idle);
+        return m_owner->setState<PlayerIdle>(context, player);
       } else {
-        m_owner->setState(context, player, PlayerState::Move);
+        return m_owner->setState<PlayerMove>(context, player);
       }
 
-      return;
     }
   }
 
@@ -276,12 +261,11 @@ void PlayerAttack::update(ECSContext& context, Entity player, real deltaTime) {
     } else {
 
       if(physics->idling) {
-        m_owner->setState(context, player, PlayerState::Idle);
+        return m_owner->setState<PlayerIdle>(context, player);
       } else {
-        m_owner->setState(context, player, PlayerState::Move);
+        return m_owner->setState<PlayerMove>(context, player);
       }
 
-      return;
     }
   }
 
@@ -295,8 +279,7 @@ void PlayerReload::onEnter(ECSContext& context, Entity player) {
   WeaponData currentWeapon = playerComponent->weapons[playerComponent->currentWeaponIndex];
 
   if(currentWeapon.type == WeaponType::KNIFE || currentWeapon.availableClips < 0) {
-    m_owner->setState(context, player, PlayerState::Idle);
-    return;
+    return m_owner->setState<PlayerIdle>(context, player);
   }
   else if(currentWeapon.type == WeaponType::PISTOL) {
     setAnimation(model->sprite, "pistol_reload");
@@ -322,12 +305,12 @@ void PlayerReload::update(ECSContext& context, Entity player, real deltaTime) {
     playerComponent->weapons[playerComponent->currentWeaponIndex].availableClips--;
 
     if(isButtonPressed(FRMouseButton::LEFT)) {
-      m_owner->setState(context, player, PlayerState::Shoot);
+      return m_owner->setState<PlayerShoot>(context, player);
     } else {
       if(physics->idling) {
-        m_owner->setState(context, player, PlayerState::Idle);
+        return m_owner->setState<PlayerIdle>(context, player);
       } else {
-        m_owner->setState(context, player, PlayerState::Move);
+        return m_owner->setState<PlayerMove>(context, player);
       }
     }
 

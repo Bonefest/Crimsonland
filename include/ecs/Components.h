@@ -175,9 +175,9 @@ struct Zombie: Component {
 };
 
 
-#include "PlayerStateController.h"
+#include "StateController.h"
 
-class PlayerStateController;
+class StateController;
 
 struct Player: Component {
 
@@ -195,7 +195,7 @@ struct Player: Component {
 
   std::size_t currentWeaponIndex;
   std::vector<WeaponData> weapons;
-  PlayerStateController* stateController;
+  StateController* stateController;
 };
 
 
