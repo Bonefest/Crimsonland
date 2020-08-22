@@ -54,18 +54,19 @@ public:
   void onPowerupPickup(Message message);
   void onMouseWheel(Message message);
 
+  void onZombieAttack(Message message);
+
 private:
   void initWeapons(Player* player);
   WeaponData parseWeapon(nlohmann::json& parser);
   void checkCurrentWeapon(Player* player);
 
   real getPlayerViewDirection();
-  Entity getPlayer(ECSContext& context);
 
   Bitfield m_playerBitfield;
-  real m_lastFootprintElapsedTime;
-
   int m_lastFrameMouseWheel;
+
+  std::list<Message> m_unprocessedZombieAttacks;
 };
 
 // class LevelSystem {
@@ -76,12 +77,16 @@ class ZombieSystem: public System {
 public:
   virtual void init(ECSContext& context);
   virtual void update(ECSContext& context, real deltaTime);
-  //virtual void draw(ECSContext& context);
-
 
   void onGenerateZombie(Message message);
 private:
   Bitfield m_zombieComponents;
+};
+
+class FootprintGenerationSystem: public System {
+public:
+  virtual void update(ECSContext& context, real deltaTime);
+
 };
 
 class ModelRenderingSystem: public System {
@@ -164,7 +169,6 @@ public:
 private:
   Sprite*    m_radarSprite;
   Sprite*    m_weaponSprite;
-  WeaponData m_lastWeaponData;
 
 };
 

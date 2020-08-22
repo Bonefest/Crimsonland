@@ -29,17 +29,18 @@ public:
       if(m_elapsedTime >= m_frameDuration) {
         m_currentX += m_frameWidth;
 
-        if(m_currentX >= m_startX + m_rowWidth - m_frameWidth) {
-
-          if(m_currentY < m_endY) {
+        if(m_currentX >= m_endX && m_currentY == m_endY) {
+          if(repeat) {
+            reset();
+          } else {
+            m_finished = true;
+            m_currentX = m_endX;
+            m_currentY = m_endY;
+          }
+        } else {
+          if(m_currentX > m_startX + m_rowWidth - m_frameWidth && m_currentY < m_endY) {
             m_currentX = m_startX;
             m_currentY += m_frameHeight;
-          } else {
-            if(repeat) {
-              reset();
-            } else {
-              m_finished = true;
-            }
           }
         }
 

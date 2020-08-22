@@ -15,6 +15,7 @@ enum class MessageType {
   SPAWN_EFFECT,
   WEAPON_PICKUP,
   POWERUP_PICKUP,
+  ZOMBIE_ATTACK,
   CUSTOM_MESSAGE,
 
   // ECS
@@ -32,12 +33,10 @@ enum class MessageType {
 
 
 enum class EffectType {
-  BLOOD_1,
-  BLOOD_2,
-  BLOOD_3,
-  BLOOD_RANDOM,
+  BLOOD,
   BLOODPRINT,
   FOOTPRINT,
+  ZOMBIE_DEATH,
   GUN_EXPLOSION
 };
 
@@ -99,6 +98,16 @@ struct Message {
       Entity entityB;
 
     } collision_info;
+
+    struct {
+
+      real x;
+      real y;
+      real angle;
+      real damage;
+
+
+    } attack_info;
 
     void* custom_data;
 

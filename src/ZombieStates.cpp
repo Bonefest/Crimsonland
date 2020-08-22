@@ -57,7 +57,19 @@ void ZombieAttack::update(ECSContext& context, Entity zombie, real deltaTime) {
   updateAnimation(model->sprite, deltaTime);
 
   if(isAnimationFinished(model->sprite)) {
-    // notify attack finished
+
+    Transformation* transform = registry->getComponent<Transformation>(zombie, ComponentID::Transformation);
+    Attributes* attributes = registry->getComponent<Attributes>(zombie, ComponentID::Attributes);
+
+    Message msg;
+    msg.type = int(MessageType::ZOMBIE_ATTACK);
+    msg.attack_info.x = transform->position.x;
+    msg.attack_info.y = transform->position.y;
+    msg.attack_info.angle = transform->angle;
+    msg.attack_info.damage = attributes->damage;
+
+    notify(msg);
+
     zombieComponent->attacking = false;
     if(physics->idling) {
       return m_owner->setState<ZombieIdle>(context, zombie);

@@ -24,6 +24,15 @@ static void generateEffect(EffectType type, vec2 position,
 }
 
 
+static Entity getPlayer(Registry* registry, Bitfield components) {
+
+  auto players = registry->findEntities(components);
+  Assert(!players.empty());
+  return players.front();
+
+}
+
+
 void TrailSystem::update(ECSContext& context, real deltaTime) {
 
   Registry* registry = context.registry;
@@ -125,7 +134,9 @@ void PlayerSystem::init(ECSContext& context) {
                                &PlayerSystem::onMouseWheel,
                                this);
 
-  m_lastFootprintElapsedTime = 0.0f;
+  registerMethod<PlayerSystem>(int(MessageType::ZOMBIE_ATTACK),
+                               &PlayerSystem::onZombieAttack,
+                               this);
 
   Entity player = context.registry->createEntity();
 
@@ -143,6 +154,7 @@ void PlayerSystem::init(ECSContext& context) {
   attributes->maxStamina = context.data.maxPlayerStamina;
   attributes->stamina = attributes->maxStamina;
   attributes->maxSpeed = context.data.maxPlayerSpeed;
+  attributes->regenSpeed = context.data.regenSpeed;
 
 
   Physics* physics = new Physics();
@@ -220,29 +232,38 @@ WeaponData PlayerSystem::parseWeapon(nlohmann::json& parser) {
 void PlayerSystem::update(ECSContext& context, real deltaTime) {
   // TODO(mizofix): if player is dead -> notify player dead
   Registry* registry = context.registry;
-  Entity player = getPlayer(context);
+  Entity player = getPlayer(context.registry, m_playerBitfield);
 
   Model* model = registry->getComponent<Model>(player, ComponentID::Model);
   Physics* physics = registry->getComponent<Physics>(player, ComponentID::Physics);
   Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
   Transformation* transf = registry->getComponent<Transformation>(player, ComponentID::Transformation);
+  Attributes* attributes = registry->getComponent<Attributes>(player, ComponentID::Attributes);
+
   transf->angle = getPlayerViewDirection();
 
   vec2 heading = degToVec(transf->angle);
   vec2 side = heading.perp();
 
+  real playerSpeed = context.data.maxPlayerSpeed;
+  if(attributes->stamina / attributes->maxStamina < 0.35f) {
+    playerSpeed *= 0.4f;
+  } 
+
+  physics->maxSpeed = playerSpeed;
+
   vec2 acceleration;
   if(isKeyPressed(FRKey::LEFT)) {
-    acceleration -= side * context.data.maxPlayerSpeed;
+    acceleration -= side * playerSpeed;
   }
   if(isKeyPressed(FRKey::RIGHT)) {
-    acceleration += side * context.data.maxPlayerSpeed * 0.75f;
+    acceleration += side * playerSpeed * 0.75f;
   }
   if(isKeyPressed(FRKey::UP)) {
-    acceleration += heading * context.data.maxPlayerSpeed * 0.75f;
+    acceleration += heading * playerSpeed * 0.75f;
   }
   if(isKeyPressed(FRKey::DOWN)) {
-    acceleration -= heading * context.data.maxPlayerSpeed * 0.5f;
+    acceleration -= heading * playerSpeed * 0.25f;
   }
   if(m_lastFrameMouseWheel != 0) {
     std::size_t weaponsSize = playerComponent->weapons.size();
@@ -280,19 +301,44 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
 
   setCameraPosition(round(transf->position.x), round(transf->position.y));
 
-  if(!physics->idling) {
-    m_lastFootprintElapsedTime += deltaTime;
-    if(m_lastFootprintElapsedTime > 0.35 && !physics->idling) {
-      m_lastFootprintElapsedTime = 0.0f;
+  playerComponent->stateController->update(context, player, deltaTime);
 
-      generateEffect(EffectType::FOOTPRINT, transf->position, 1.0f, transf->angle, 5.0f, true);
-
+  bool playerAttacked = false;
+  for(auto msg: m_unprocessedZombieAttacks) {
+    vec2 attackPosition = vec2(msg.attack_info.x, msg.attack_info.y);
+    vec2 vecToPlayer = transf->position - attackPosition;
+    real distanceToPlayer = vecToPlayer.length();
+    if(distanceToPlayer > 0.01) {
+      vecToPlayer.x /= distanceToPlayer;
+      vecToPlayer.y /= distanceToPlayer;
     }
-  } else {
-    m_lastFootprintElapsedTime = 0.0f;
+
+    if(distanceToPlayer < physics->size * 3.0f &&
+       vecToPlayer.dot(degToVec(msg.attack_info.angle)) > cos(degToRad(45.0f))) {
+      attributes->health -= msg.attack_info.damage;
+
+      generateEffect(EffectType::BLOOD, transf->position, 1.0f, transf->angle, 3.0f, true);
+      generateEffect(EffectType::BLOODPRINT, transf->position, 1.0f, transf->angle, 7.0f, true);
+
+      playerAttacked = true;
+    }
+
   }
 
-  playerComponent->stateController->update(context, player, deltaTime);
+  m_unprocessedZombieAttacks.clear();
+
+  if(!playerAttacked) {
+    attributes->health = std::min(attributes->health + attributes->regenSpeed * deltaTime,
+                                  attributes->maxHealth);
+  }
+
+  if(physics->idling) {
+    attributes->stamina = std::min(attributes->stamina + attributes->regenSpeed * deltaTime,
+                                   attributes->maxStamina);
+  } else {
+    attributes->stamina = std::max(attributes->stamina - 6.0f * deltaTime, 0.0f);
+  }
+
 }
 
 
@@ -319,6 +365,10 @@ void PlayerSystem::onPowerupPickup(Message message) {
 
 }
 
+void PlayerSystem::onZombieAttack(Message message) {
+  m_unprocessedZombieAttacks.push_back(message);
+}
+
 void PlayerSystem::onMouseWheel(Message message) {
   m_lastFrameMouseWheel = message.wheel.y;
 }
@@ -335,15 +385,6 @@ real PlayerSystem::getPlayerViewDirection() {
 
   return radToDeg(vecToRad(cursorRelativeToCenter));
 }
-
-Entity PlayerSystem::getPlayer(ECSContext& context) {
-  EntitiesContainer players = context.registry->findEntities(m_playerBitfield);
-
-  Assert(!players.empty());
-
-  return players.front();
-}
-
 
 void ZombieSystem::init(ECSContext& context) {
   m_zombieComponents = buildBitfield(ComponentID::Model,
@@ -363,7 +404,7 @@ void ZombieSystem::init(ECSContext& context) {
   transf->angle = 0.0f;
 
   Physics* physics = new Physics();
-  physics->size = 50.0f;
+  physics->size = 20.0f;
   physics->maxSpeed = 50.0f;
 
   Zombie* zombieComponent = new Zombie();
@@ -375,10 +416,16 @@ void ZombieSystem::init(ECSContext& context) {
   zombieComponent->sawPlayerRecently = false;
   zombieComponent->stateController = new StateController();
 
+  Attributes* attributes = new Attributes();
+  attributes->maxHealth = 500.0f;
+  attributes->health = 500.0f;
+  attributes->damage = 20.0f;
+
   registry->addComponent(zombie, model);
   registry->addComponent(zombie, transf);
   registry->addComponent(zombie, physics);
   registry->addComponent(zombie, zombieComponent);
+  registry->addComponent(zombie, attributes);
 
   zombieComponent->stateController->setState<ZombieIdle>(context, zombie);
 }
@@ -388,18 +435,19 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
 
   Bitfield playerComponents = buildBitfield(ComponentID::Transformation,
                                             ComponentID::Physics,
-                                            ComponentID::Player);
+                                            ComponentID::Player,
+                                            ComponentID::Attributes);
 
-  auto players = registry->findEntities(playerComponents);
-  Assert(!players.empty());
 
-  Entity player = players.front();
+  Entity player = getPlayer(registry, playerComponents);
   Transformation* playerTransfrom = registry->getComponent<Transformation>(player,
                                                                            ComponentID::Transformation);
   Physics* playerPhysics = registry->getComponent<Physics>(player, ComponentID::Physics);
   Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
 
   vec2 playerDirection = degToVec(playerTransfrom->angle);
+
+  std::list<Entity> proceededZombies;
 
   // TODO(mizofix): calculate fov based on player alpha
   auto zombies = registry->findEntities(m_zombieComponents);
@@ -408,6 +456,16 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
                                                                              ComponentID::Transformation);
     Zombie* zombieComponent = registry->getComponent<Zombie>(zombie, ComponentID::Zombie);
     Physics* zombiePhysics = registry->getComponent<Physics>(zombie, ComponentID::Physics);
+    Attributes* zombieAttributes = registry->getComponent<Attributes>(zombie, ComponentID::Attributes);
+
+    if(zombieAttributes->health <= 0.0f) {
+      proceededZombies.push_back(zombie);
+      generateEffect(EffectType::ZOMBIE_DEATH,
+                     zombieTransform->position,
+                     1.0f, zombieTransform->angle, 15.0f,
+                     true);
+      continue;
+    }
 
     zombieComponent->stateController->update(context, zombie, deltaTime);
 
@@ -439,7 +497,6 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
         // TODO(mizofix): predict player path
         zombiePhysics->velocity = vecToPlayer * zombiePhysics->maxSpeed;
         zombieTransform->angle = vecToDeg(vecToPlayer);
-        //        zombiePhysics->acceleration = vecToPlayer * 15.0f;
 
       }
 
@@ -479,17 +536,52 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
       }
 
     }
-
-    if(!zombiePhysics->idling) {
-      zombieComponent->elapsedFootprintTime += deltaTime;
-      if(zombieComponent->elapsedFootprintTime > 0.5f) {
-        generateEffect(EffectType::FOOTPRINT, zombieTransform->position, 1.0f, zombieTransform->angle, 7.0f, true);
-
-        zombieComponent->elapsedFootprintTime = 0.0f;
-      }
-    }
+ 
   }
 
+  for(auto zombie: proceededZombies) {
+    registry->destroyEntity(zombie);
+  }
+
+
+}
+
+void FootprintGenerationSystem::update(ECSContext& context, real deltaTime) {
+
+  Registry* registry = context.registry;
+
+  Bitfield desiredComponents = buildBitfield(ComponentID::Transformation,
+                                             ComponentID::Attributes,
+                                             ComponentID::Physics);
+
+  auto entities = registry->findEntities(desiredComponents);
+  for(auto entity: entities) {
+    Transformation* transf = context.registry->getComponent<Transformation>(entity,
+                                                                            ComponentID::Transformation);
+    Attributes* attributes = context.registry->getComponent<Attributes>(entity,
+                                                                        ComponentID::Attributes);
+
+    Physics* physics = context.registry->getComponent<Physics>(entity, ComponentID::Physics);
+
+    if(!physics->idling) {
+
+      attributes->footprintElapsedTime += deltaTime;
+
+      EffectType type = EffectType::FOOTPRINT;
+      real printTime = 0.5f;
+      if((attributes->health / attributes->maxHealth) < 0.5) {
+        type = EffectType::BLOODPRINT;
+        printTime = 0.35f;
+      }
+
+      if(attributes->footprintElapsedTime > printTime) {
+        generateEffect(type, transf->position, 1.0f, transf->angle, 7.0f, true);
+        attributes->footprintElapsedTime = 0.0f;
+      }
+
+    }
+
+  }
 
 }
 
@@ -611,12 +703,19 @@ void EffectsSystem::onSpawnEffect(Message message) {
   const char* effectName = "";
 
   switch(message.effect_info.type) {
-  case EffectType::BLOOD_1: effectName = "blood_1"; break;
-  case EffectType::BLOOD_2: effectName = "blood_2"; break;
-  case EffectType::BLOOD_3: effectName = "blood_3"; break;
+  case EffectType::BLOOD:
+  {
+    effectName = ((rand() % 2) ? "blood_1" : "blood_2");
+  } break;
   case EffectType::FOOTPRINT: effectName = "footprint"; break;
+  case EffectType::BLOODPRINT:{
+    effectName = ((rand() % 2) ? "bloodprint_1" : "bloodprint_2");
+  } break;
   case EffectType::GUN_EXPLOSION: effectName = "gun_explosion"; break;
-
+  case EffectType::ZOMBIE_DEATH:
+  {
+    effectName = ((rand() % 2) ? "zombie_death1" :  "zombie_death2");
+  } break;
   default: break;
   }
 
@@ -740,13 +839,13 @@ void BulletSystem::update(ECSContext& context, real deltaTime) {
     if(bullet != Constants::INVALID_ENTITY && registry->hasComponent(object, ComponentID::Zombie)) {
       Bullet* bulletComponent = registry->getComponent<Bullet>(bullet, ComponentID::Bullet);
       Zombie* zombie = registry->getComponent<Zombie>(object, ComponentID::Zombie);
-
-      //zombie->health -= bulletComponent->damage; or notify?
+      Attributes* zombieAttributes = registry->getComponent<Attributes>(object, ComponentID::Attributes);
+      zombieAttributes->health -= bulletComponent->damage;
 
       Transformation* zombieTransf = registry->getComponent<Transformation>(object, ComponentID::Transformation);
 
-      generateEffect(EffectType::BLOOD_1, zombieTransf->position, 1.0f, zombieTransf->angle, 3.0f, true);
-
+      generateEffect(EffectType::BLOOD, zombieTransf->position, 1.0f, zombieTransf->angle, 3.0f, true);
+      generateEffect(EffectType::BLOODPRINT, zombieTransf->position, 1.0f, zombieTransf->angle, 7.0f, true);
 
       bulletComponent->durability--;
       if(bulletComponent->durability <= 0) {
@@ -794,15 +893,11 @@ void UIRenderingSystem::update(ECSContext& context, real deltaTime) {
 
   Registry* registry = context.registry;
   Bitfield desiredComponents = buildBitfield(ComponentID::Player);
-  auto players = registry->findEntities(desiredComponents);
+  Entity player = getPlayer(registry, desiredComponents);
 
-  Assert(!players.empty());
-
-  Entity player = players.front();
   Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
-  m_lastWeaponData = playerComponent->weapons[playerComponent->currentWeaponIndex];
 
-  WeaponType currentWeapon = m_lastWeaponData.type;
+  WeaponType currentWeapon = playerComponent->weapons[playerComponent->currentWeaponIndex].type;
   if(currentWeapon == WeaponType::KNIFE) {
     setAnimation(m_weaponSprite, "ui_knife");
   }
@@ -819,12 +914,49 @@ void UIRenderingSystem::update(ECSContext& context, real deltaTime) {
 }
 
 void UIRenderingSystem::draw(ECSContext& context) {
-  drawSprite(m_radarSprite, int(context.data.windowWidth), 10, 192, 0.125f, 0.0f, false);
-  drawSprite(m_weaponSprite, 10, 10, 192, 0.5f, 0.0f, false);
+
+  Registry* registry = context.registry;
+
+  Bitfield desiredComponents = buildBitfield(ComponentID::Player, ComponentID::Attributes);
+  Entity player = getPlayer(registry, desiredComponents);
+  Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
+  Attributes* playerAttributes = registry->getComponent<Attributes>(player, ComponentID::Attributes);
+
+  const auto& weaponData = playerComponent->weapons[playerComponent->currentWeaponIndex];
 
   char weaponInfoBuffer[255];
-  sprintf(weaponInfoBuffer, "Ammo: %d / %d ( %d clips)", m_lastWeaponData.ammo,
-          m_lastWeaponData.clipSize, m_lastWeaponData.availableClips);
+  sprintf(weaponInfoBuffer, "Ammo: %d / %d ( %d clips)",
+          weaponData.ammo, weaponData.clipSize, weaponData.availableClips);
 
+  int alpha = 192;
+  int wpOffsetX = 10, wpOffsetY = 10, wpWidth, wpHeight;
+  real wpScale = 0.5f;
+  getSpriteSize(m_weaponSprite, wpWidth, wpHeight);
+
+  // NOTE(mizofix): Weapon icon rendering
   drawText(weaponInfoBuffer, 10, 10, 0.0f, 0.0f, 0, 0, 0, false);
+  drawSprite(m_weaponSprite, wpOffsetX, wpOffsetY, alpha, wpScale, 0.0f, false);
+
+  // NOTE(mizofix): Health bar rendering
+  int barAlpha = 96;
+  int barWidth = 200, barHeight = 15;
+  int hpBarTextOffsetY = wpOffsetY + int(wpHeight * 0.5f) - 25;
+  drawText("Health points", wpOffsetX, hpBarTextOffsetY, 0.0f, 0.0f, 0, 0, 0, false);
+
+  int hpBarOffsetY = hpBarTextOffsetY + 24;
+  int hpBarWidth = int(std::max(playerAttributes->health / playerAttributes->maxHealth, 0.0f) * barWidth);
+  drawRect(wpOffsetX, hpBarOffsetY, hpBarWidth, barHeight,
+           108, 108, 108, barAlpha, false);
+
+  // NOTE(mizofix): Stamina bar rendering
+  int staminaBarTextOffsetY = hpBarOffsetY + barHeight + 10;
+  drawText("Stamina points", wpOffsetX, staminaBarTextOffsetY, 0.0f, 0.0f, 0, 0, 0, false);
+
+  int staminaBarOffsetY = staminaBarTextOffsetY + 24;
+  int staminaBarWidth = int(std::max(playerAttributes->stamina / playerAttributes->maxStamina, 0.0f) * barWidth);
+  drawRect(wpOffsetX, staminaBarOffsetY, staminaBarWidth, barHeight,
+           162, 162, 162, barAlpha, false);
+
+  // NOTE(mizofix): Radar rendering
+  drawSprite(m_radarSprite, int(context.data.windowWidth), 10, 128, 0.125f, 0.0f, false);
 }

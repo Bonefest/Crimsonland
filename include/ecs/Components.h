@@ -66,7 +66,8 @@ struct Transformation: Component {
 
 struct Attributes: Component {
 
- Attributes():  maxHealth(0.0f),
+ Attributes():  damage(0.0f),
+                maxHealth(0.0f),
                 health(0.0f),
                 maxStamina(0.0f),
                 stamina(0.0f),
@@ -78,6 +79,9 @@ struct Attributes: Component {
     return ComponentID::Attributes;
   }
 
+  real damage;
+
+  real regenSpeed;
   real maxHealth;
   real health;
 
@@ -87,6 +91,8 @@ struct Attributes: Component {
   real maxSpeed;
 
   int level;
+
+  real footprintElapsedTime;
 };
 
 struct Physics: Component {
@@ -177,9 +183,7 @@ struct Zombie: Component {
             attackDistance(0.0f),
             followingDistance(0.0f),
             sawPlayerRecently(false),
-            attacking(false),
-            elapsedFootprintTime(0.0f) { }
-
+            attacking(false) { }
 
   virtual ComponentID getID() {
     return ComponentID::Zombie;
@@ -197,8 +201,6 @@ struct Zombie: Component {
   real             followingDistance;
   bool             sawPlayerRecently;
   bool             attacking;
-
-  real             elapsedFootprintTime;
 };
 
 

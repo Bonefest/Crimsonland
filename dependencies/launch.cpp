@@ -237,8 +237,8 @@ FRAMEWORK_API void destroySprite(Sprite* s)
 FRAMEWORK_API void getSpriteSize(Sprite* s, int& w, int &h)
 {
 	SDL_assert(s);
-	w = s->w;
-	h = s->h;
+
+    SDL_QueryTexture(s->animation.texture, NULL, NULL, &w, &h);
 }
 
 FRAMEWORK_API void drawSprite(Sprite* sprite, int x, int y, int alpha,

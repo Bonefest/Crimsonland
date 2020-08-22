@@ -10,6 +10,9 @@ CrimsonlandFramework::CrimsonlandFramework(int argc, char** commands): m_lastTim
   m_worldData = parseCommands(argc, commands);
   m_worldData.maxEffectsNumber = 100;
   m_worldData.maxPlayerSpeed = 100.0f;
+  m_worldData.maxPlayerHealth = 200.0f;
+  m_worldData.maxPlayerStamina = 100.0f;
+  m_worldData.regenSpeed = 5.0f;
 
   info("-------------------------\n");
   info("final world data values are:\n");
@@ -69,6 +72,7 @@ void CrimsonlandFramework::initECS() {
   m_systemManager.addSystem(m_context, new PenetrationResolutionSystem());
   m_systemManager.addSystem(m_context, new BulletSystem());
 
+  m_systemManager.addSystem(m_context, new FootprintGenerationSystem());
   m_systemManager.addSystem(m_context, new TrailSystem());
   m_systemManager.addSystem(m_context, new EffectsSystem());
   m_systemManager.addSystem(m_context, new PlayerSystem());

@@ -28,6 +28,7 @@ struct WorldData {
   real maxPlayerHealth;
   real maxPlayerStamina;
   real maxPlayerSpeed;
+  real regenSpeed;
 
   uint32_t maxEffectsNumber;
 };
