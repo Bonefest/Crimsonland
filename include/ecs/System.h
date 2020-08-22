@@ -169,6 +169,8 @@ public:
 private:
   Sprite*    m_radarSprite;
   Sprite*    m_weaponSprite;
+  Sprite*    m_arrowSprite;
+  Sprite*    m_xiconSprite;
 
 };
 

@@ -440,12 +440,12 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
 
 
   Entity player = getPlayer(registry, playerComponents);
-  Transformation* playerTransfrom = registry->getComponent<Transformation>(player,
+  Transformation* playerTransform = registry->getComponent<Transformation>(player,
                                                                            ComponentID::Transformation);
   Physics* playerPhysics = registry->getComponent<Physics>(player, ComponentID::Physics);
   Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
 
-  vec2 playerDirection = degToVec(playerTransfrom->angle);
+  vec2 playerDirection = degToVec(playerTransform->angle);
 
   std::list<Entity> proceededZombies;
 
@@ -469,7 +469,7 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
 
     zombieComponent->stateController->update(context, zombie, deltaTime);
 
-    vec2 vecToPlayer = playerTransfrom->position - zombieTransform->position;
+    vec2 vecToPlayer = playerTransform->position - zombieTransform->position;
     real distanceToPlayer = vecToPlayer.length();
     if(distanceToPlayer > 0.01) {
       vecToPlayer.x /= distanceToPlayer;
@@ -877,15 +877,19 @@ void BulletSystem::onCollision(Message message) {
 
 UIRenderingSystem::~UIRenderingSystem() {
   destroySprite(m_weaponSprite);
+  destroySprite(m_radarSprite);
+  destroySprite(m_arrowSprite);
+  destroySprite(m_xiconSprite);
 }
 
 void UIRenderingSystem::init(ECSContext& context) {
 
-  m_radarSprite = createSprite("radar");
+  m_radarSprite = createSprite("ui_radar");
   setSpriteAnchorPoint(m_radarSprite, 1.0f, 0.0f);
   m_weaponSprite = createSprite("ui_knife");
   setSpriteAnchorPoint(m_weaponSprite, 0.0f, 0.0f);
-
+  m_arrowSprite = createSprite("ui_arrow");
+  m_xiconSprite = createSprite("ui_xicon");
 }
 
 
@@ -921,6 +925,7 @@ void UIRenderingSystem::draw(ECSContext& context) {
   Entity player = getPlayer(registry, desiredComponents);
   Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
   Attributes* playerAttributes = registry->getComponent<Attributes>(player, ComponentID::Attributes);
+  Transformation* playerTransform = registry->getComponent<Transformation>(player, ComponentID::Transformation);
 
   const auto& weaponData = playerComponent->weapons[playerComponent->currentWeaponIndex];
 
@@ -958,5 +963,52 @@ void UIRenderingSystem::draw(ECSContext& context) {
            162, 162, 162, barAlpha, false);
 
   // NOTE(mizofix): Radar rendering
-  drawSprite(m_radarSprite, int(context.data.windowWidth), 10, 128, 0.125f, 0.0f, false);
+
+  int radarWidth, radarHeight;
+  getSpriteSize(m_radarSprite, radarWidth, radarHeight);
+
+  int radarOffsetX = 20;
+  int radarOffsetY = 20;
+  int radarRadius = int(round(real(radarWidth) * 0.1f));
+
+  vec2 radarGlobalCenter = vec2(context.data.windowWidth - radarOffsetX - radarRadius,
+                                radarOffsetY + radarRadius);
+
+  
+  drawSprite(m_radarSprite, int(context.data.windowWidth) - radarOffsetX, radarOffsetY,
+             128, 0.2f, 0.0f, false);
+
+
+  Bitfield zombieComponents = buildBitfield(ComponentID::Transformation,
+                                            ComponentID::Zombie);
+
+  auto zombies = registry->findEntities(zombieComponents);
+  for(auto zombie: zombies) {
+    Transformation* zombieTransform = registry->getComponent<Transformation>(zombie,
+                                                                             ComponentID::Transformation);
+    vec2 vecToZombie = zombieTransform->position - playerTransform->position;
+    real distanceToZombie = vecToZombie.length();
+    real maxRadarDistance = 1500.0f;
+
+    if(distanceToZombie > 0.01) {
+      vecToZombie.x /= distanceToZombie;
+      vecToZombie.y /= distanceToZombie;
+    }
+      
+
+    distanceToZombie = std::min(distanceToZombie, maxRadarDistance);
+
+    real convertedDistance = (distanceToZombie / maxRadarDistance) * radarRadius;
+
+    vec2 convertedPosition = radarGlobalCenter + vecToZombie * convertedDistance;
+    drawSprite(m_xiconSprite, int(convertedPosition.x), int(convertedPosition.y),
+               128, 1.0f, zombieTransform->angle, false);
+
+
+  }
+
+  drawSprite(m_arrowSprite, int(radarGlobalCenter.x), int(radarGlobalCenter.y),
+             128, 1.0f, playerTransform->angle, false);
+
+
 }
