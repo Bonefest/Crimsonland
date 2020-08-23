@@ -45,7 +45,8 @@ public:
 
   virtual void onEnter(ECSContext& context, Entity player);
   virtual void update(ECSContext& context, Entity player, real deltaTime);
-
+private:
+  void generateAttack(Registry* registry, real angle, const vec2& position, real damage);
 
 };
 

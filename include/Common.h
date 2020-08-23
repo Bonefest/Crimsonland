@@ -14,7 +14,7 @@
 #endif
 
 struct RoundData {
-  int  currentRoundNumber;
+  uint32_t  currentRoundNumber;
   real elapsedTime;
   real roundTime;
 
@@ -23,8 +23,7 @@ struct RoundData {
 
 struct WorldData {
 
-  int  numEnemies;
-  int  numAmmo;
+  uint32_t  numEnemies;
 
   int  windowWidth;
   int  windowHeight;
@@ -36,6 +35,7 @@ struct WorldData {
   real maxPlayerStamina;
   real maxPlayerSpeed;
   real regenSpeed;
+  real staminaRegenSpeed;
 
   uint32_t maxEffectsNumber;
 
@@ -65,6 +65,8 @@ struct WeaponData {
   int        durability;
   real       lifetime;
   real       damage;
+  real       meleeDamage;
+  real       meleeRadius;
   real       speed;
 
   real       trailLifetime;

@@ -3,8 +3,6 @@
 #include <cstdlib>
 #include <cstdio>
 
-
-
 const static char* line = "-------------------------\n";
 const static char* error_header = "[error]";
 const static char* warning_header = "[warning]";
@@ -48,8 +46,6 @@ WorldData parseCommands(int argc, char** commands) {
       printf(" -map [Width]x[Height] - to set map size equal to Width times Height pixels\n");
       printf(" -window [Width]x[Height] - to set window size equal to Width times Height pixels\n"
              "  (minimal width %d, minimal height %d)\n", MIN_SCREENW, MIN_SCREENH);
-      printf(" -num_ammo [num] - to set desired maximal number of ammo\n"
-             "  (minimal %d maximal %d)\n", MIN_AMMO, MAX_AMMO);
       printf(" -num_enemies [num] - to set desired maximal number of enemies\n"
              "  (minimal %d maximal %d)\n", MIN_ENEMIES, MAX_ENEMIES);
 
@@ -105,11 +101,6 @@ WorldData parseCommands(int argc, char** commands) {
 
     else if(strcasecmp(commands[i], "-num_enemies") == 0 && isNotLast) {
       result.numEnemies = clamp(atoi(commands[i + 1]), MIN_ENEMIES, MAX_ENEMIES);
-      i += 2;
-    }
-
-    else if(strcasecmp(commands[i], "-num_ammo") == 0 && isNotLast) {
-      result.numAmmo = clamp(atoi(commands[i + 1]), MIN_AMMO, MAX_AMMO);
       i += 2;
     }
 

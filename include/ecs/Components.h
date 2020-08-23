@@ -8,19 +8,20 @@
 #include "Common.h"
 #include "Framework.h"
 
-enum class ComponentID {  Model,
-                          Transformation,
-                          Physics,
-                          Attributes,
-                          Player,
-                          Zombie,
-                          Effect,
-                          Bullet,
-                          Trail,
-                          Weapon,
-                          Powerup,
-                          // HpBar ??
-                          COUNT };
+enum class ComponentID {
+  Model,
+  Transformation,
+  Physics,
+  Attributes,
+  Player,
+  Zombie,
+  Effect,
+  Bullet,
+  Trail,
+  Weapon,
+  Powerup,
+  COUNT
+};
 
 struct Component {
   virtual ~Component() { }
@@ -31,10 +32,9 @@ struct Model: Component {
 
  Model(const char* animationName):Model() {
    sprite = createSprite(animationName);
-   alpha = 255;
  }
 
- Model(): sprite(nullptr) { }
+ Model(): sprite(nullptr), alpha(255) { }
 
   ~Model() {
     if(sprite != nullptr) {
@@ -90,7 +90,7 @@ struct Attributes: Component {
 
   real maxSpeed;
 
-  int level;
+  int  level;
 
   real footprintElapsedTime;
 };
@@ -216,9 +216,21 @@ struct Player: Component {
     return ComponentID::Player;
   }
 
-  std::size_t currentWeaponIndex;
+  std::size_t             currentWeaponIndex;
   std::vector<WeaponData> weapons;
-  StateController* stateController;
+  StateController*        stateController;
+};
+
+
+struct WeaponBox: Component {
+
+  virtual ComponentID getID() {
+    return ComponentID::Weapon;
+  }
+
+  WeaponType type;
+  int        clips;
+
 };
 
 

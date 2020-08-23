@@ -142,8 +142,16 @@ void PlayerShoot::update(ECSContext& context, Entity player, real deltaTime) {
 
     vec2 bulletPosition = playerHeading * offset.x + playerSide * offset.y + transf->position;
 
-    Bullet bullet = generateBullet(context.registry, playerHeading, bulletPosition,
-                                   playerComponent->weapons[playerComponent->currentWeaponIndex]);
+    std::vector<vec2> newBulletsData = {playerHeading};
+    if(playerComponent->weapons[playerComponent->currentWeaponIndex].type == WeaponType::SHOTGUN) {
+      newBulletsData.push_back(degToVec(transf->angle - 15.0f));
+      newBulletsData.push_back(degToVec(transf->angle + 15.0f));
+    }
+
+    for(auto direction: newBulletsData) {
+      generateBullet(context.registry, direction, bulletPosition,
+                     playerComponent->weapons[playerComponent->currentWeaponIndex]);
+    }
 
     vec2 explosionPosition = bulletPosition + playerHeading * 11.0f;
     generateExplosion(explosionPosition, transf->angle);
@@ -230,6 +238,7 @@ bool PlayerShoot::hasAvailableAmmo(Player* player) {
 
 void PlayerAttack::onEnter(ECSContext& context, Entity player) {
   Model* model = context.registry->getComponent<Model>(player, ComponentID::Model);
+  Transformation* transf = context.registry->getComponent<Transformation>(player, ComponentID::Transformation);
   Player* playerComponent = context.registry->getComponent<Player>(player, ComponentID::Player);
 
   WeaponData currentWeapon = playerComponent->weapons[playerComponent->currentWeaponIndex];
@@ -246,6 +255,15 @@ void PlayerAttack::onEnter(ECSContext& context, Entity player) {
   else if(currentWeapon.type == WeaponType::RIFLE) {
     setAnimation(model->sprite, "rifle_attack");
   }
+
+  // NOTE(mizofix): The easiest way to generate an attack is to generate several
+  // invisible bullets across attack radius
+  for(int i = 0; i < 10; ++i) {
+    float angleOffset = (float(i) / 10.0f) * currentWeapon.meleeRadius - currentWeapon.meleeRadius * 0.5f;
+
+    generateAttack(context.registry, transf->angle + angleOffset, transf->position, currentWeapon.meleeDamage / 10.0f);
+
+  }
 }
 
 void PlayerAttack::update(ECSContext& context, Entity player, real deltaTime) {
@@ -255,6 +273,7 @@ void PlayerAttack::update(ECSContext& context, Entity player, real deltaTime) {
   Physics* physics = context.registry->getComponent<Physics>(player, ComponentID::Physics);
 
   updateAnimation(model->sprite, deltaTime);
+
   if(isAnimationFinished(model->sprite)) {
 
     if(isButtonPressed(FRMouseButton::LEFT)) {
@@ -269,6 +288,32 @@ void PlayerAttack::update(ECSContext& context, Entity player, real deltaTime) {
 
     }
   }
+
+}
+
+void PlayerAttack::generateAttack(Registry* registry,
+                                  real angle, const vec2& position,
+                                  real damage) {
+
+  Entity attackPart = registry->createEntity();
+
+  Physics* physics = new Physics();
+  physics->velocity = degToVec(angle) * 500.0f;
+  physics->size = 3.0f;
+  physics->maxSpeed = 500.0f;
+
+  Transformation* transformation = new Transformation();
+  transformation->position = position;
+  transformation->angle = 0.0f;
+
+  Bullet* bulletComponent = new Bullet();
+  bulletComponent->lifetime = 0.1;
+  bulletComponent->durability = 1;
+  bulletComponent->damage = damage;
+
+  registry->addComponent(attackPart, physics);
+  registry->addComponent(attackPart, transformation);
+  registry->addComponent(attackPart, bulletComponent);
 
 }
 

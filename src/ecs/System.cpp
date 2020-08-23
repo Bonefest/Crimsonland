@@ -32,6 +32,10 @@ static Entity getPlayer(Registry* registry, Bitfield components) {
 
 }
 
+static bool isOutOfMap(const vec2& position, real mapWidth, real mapHeight) {
+  return (position.x > mapWidth * 0.5f  || position.x < -mapWidth * 0.5f ||
+          position.y > mapHeight * 0.5f || position.y < -mapHeight * 0.5f);
+}
 
 void TrailSystem::update(ECSContext& context, real deltaTime) {
 
@@ -122,20 +126,16 @@ TrailParticle TrailSystem::generateParticle(const vec2& targetVelocity, const ve
 }
 
 void PlayerSystem::init(ECSContext& context) {
-  registerMethod<PlayerSystem>(int(MessageType::WEAPON_PICKUP),
-                               &PlayerSystem::onWeaponPickup,
-                               this);
-
-  registerMethod<PlayerSystem>(int(MessageType::POWERUP_PICKUP),
-                               &PlayerSystem::onPowerupPickup,
-                               this);
-
   registerMethod<PlayerSystem>(int(MessageType::ON_MOUSE_WHEEL),
                                &PlayerSystem::onMouseWheel,
                                this);
 
   registerMethod<PlayerSystem>(int(MessageType::ZOMBIE_ATTACK),
                                &PlayerSystem::onZombieAttack,
+                               this);
+
+  registerMethod<PlayerSystem>(int(MessageType::ON_COLLISION),
+                               &PlayerSystem::onCollision,
                                this);
 
   Entity player = context.registry->createEntity();
@@ -203,9 +203,12 @@ void PlayerSystem::initWeapons(Player* player) {
 WeaponData PlayerSystem::parseWeapon(nlohmann::json& parser) {
   WeaponData result {};
   result.type = WeaponType(parser["type"]);
-  result.damage = parser["damage"];
+  result.meleeDamage = parser["melee_damage"];
+  result.meleeRadius = parser["melee_radius"];
 
   if(result.type != WeaponType::KNIFE) {
+
+    result.damage = parser.value("damage", 0.0f);
 
     result.handOffset.x = parser["offset"]["x"];
     result.handOffset.y = parser["offset"]["y"];
@@ -234,7 +237,6 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
   Registry* registry = context.registry;
   Entity player = getPlayer(context.registry, m_playerBitfield);
 
-  Model* model = registry->getComponent<Model>(player, ComponentID::Model);
   Physics* physics = registry->getComponent<Physics>(player, ComponentID::Physics);
   Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
   Transformation* transf = registry->getComponent<Transformation>(player, ComponentID::Transformation);
@@ -327,6 +329,8 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
 
   m_unprocessedZombieAttacks.clear();
 
+  processPlayerCollisions(registry);
+
   if(!playerAttacked) {
     attributes->health = std::min(attributes->health + attributes->regenSpeed * deltaTime,
                                   attributes->maxHealth);
@@ -336,11 +340,49 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
     attributes->stamina = std::min(attributes->stamina + attributes->regenSpeed * deltaTime,
                                    attributes->maxStamina);
   } else {
-    attributes->stamina = std::max(attributes->stamina - 6.0f * deltaTime, 0.0f);
+    attributes->stamina = std::max(attributes->stamina - context.data.staminaRegenSpeed * deltaTime, 0.0f);
   }
 
 }
 
+
+void PlayerSystem::processPlayerCollisions(Registry* registry) {
+  for(auto collision: m_unprocessedCollisions) {
+    Entity player = Constants::INVALID_ENTITY;
+    Entity box = Constants::INVALID_ENTITY;
+
+    if(registry->hasComponent(collision.collision_info.entityA, ComponentID::Player)) {
+      player = collision.collision_info.entityA;
+    }
+    else if(registry->hasComponent(collision.collision_info.entityB, ComponentID::Player)) {
+      player = collision.collision_info.entityB;
+    }
+
+    if(registry->hasComponent(collision.collision_info.entityA, ComponentID::Weapon)) {
+      box = collision.collision_info.entityA;
+    }
+    else if(registry->hasComponent(collision.collision_info.entityB, ComponentID::Weapon)) {
+      box = collision.collision_info.entityB;
+    }
+
+    if(player != Constants::INVALID_ENTITY && box != Constants::INVALID_ENTITY) {
+      Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
+      WeaponBox* weaponComponent = registry->getComponent<WeaponBox>(box, ComponentID::Weapon);
+
+      for(auto& weapon: playerComponent->weapons) {
+        if(weapon.type == weaponComponent->type) {
+          weapon.availableClips += weaponComponent->clips;
+          break;
+        }
+      }
+
+      registry->destroyEntity(box);
+
+    }
+  }
+
+  m_unprocessedCollisions.clear();
+}
 
 void PlayerSystem::checkCurrentWeapon(Player* player) {
   auto& weapons = player->weapons;
@@ -351,13 +393,8 @@ void PlayerSystem::checkCurrentWeapon(Player* player) {
   }
 }
 
-
-void PlayerSystem::onWeaponPickup(Message message) {
-
-}
-
-void PlayerSystem::onPowerupPickup(Message message) {
-
+void PlayerSystem::onCollision(Message message) {
+  m_unprocessedCollisions.push_back(message);
 }
 
 void PlayerSystem::onZombieAttack(Message message) {
@@ -400,10 +437,6 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
   Entity player = getPlayer(registry, playerComponents);
   Transformation* playerTransform = registry->getComponent<Transformation>(player,
                                                                            ComponentID::Transformation);
-  Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
-
-  vec2 playerDirection = degToVec(playerTransform->angle);
-
   std::list<Entity> proceededZombies;
 
   // TODO(mizofix): calculate fov based on player alpha
@@ -519,6 +552,15 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
 
 }
 
+void LevelSystem::init(ECSContext& context) {
+  m_elapsedTimeFromLastZombieGeneration = 0.0f;
+  m_elapsedTimeFromLastBoxGeneration = 0.0f;
+
+  for(int i = 0; i < rand() % 3 + 1; ++i) {
+    generateWeaponBox(context, vec2());
+  }
+}
+
 void LevelSystem::update(ECSContext& context, real deltaTime) {
 
   Registry* registry = context.registry;
@@ -532,12 +574,16 @@ void LevelSystem::update(ECSContext& context, real deltaTime) {
                                                                                 ComponentID::Transformation);
 
 
+  m_elapsedTimeFromLastBoxGeneration += deltaTime;
+  m_elapsedTimeFromLastZombieGeneration += deltaTime;
+
+  uint32_t currentRound = context.data.roundData.currentRoundNumber;
   context.data.roundData.elapsedTime += deltaTime;
 
   if(context.data.roundData.intermissionActivated) {
     if(context.data.roundData.elapsedTime > context.data.roundData.roundTime) {
       // TODO(mizofix): notify round has begun
-      context.data.roundData.roundTime = context.data.roundData.currentRoundNumber * 30.0f + 60.0f;
+      context.data.roundData.roundTime = currentRound * 30.0f + 60.0f;
       context.data.roundData.intermissionActivated = false;
       context.data.roundData.elapsedTime = 0.0f;
     }
@@ -549,8 +595,6 @@ void LevelSystem::update(ECSContext& context, real deltaTime) {
                                               ComponentID::Transformation);
 
     auto zombies = registry->findEntities(zombieComponents);
-
-    int currentRound = context.data.roundData.currentRoundNumber;
 
     if(context.data.roundData.elapsedTime > context.data.roundData.roundTime) {
 
@@ -570,12 +614,12 @@ void LevelSystem::update(ECSContext& context, real deltaTime) {
 
     } else {
 
-      std::size_t zombiesMaxCount = currentRound * 10 + 25;
+      uint32_t zombiesMaxCount = std::min(currentRound * 10 + 25, context.data.numEnemies);
       if(zombies.size() < zombiesMaxCount) {
-        real zombieSpawnTime = std::max(1.0f - real(currentRound) * 0.1f, 0.5f);
-        if(m_elapsedTimeFromLastGeneration < zombieSpawnTime) {
+        real zombieSpawnTime = std::max(0.7f - real(currentRound) * 0.1f, 0.1f);
+        if(m_elapsedTimeFromLastZombieGeneration > zombieSpawnTime) {
           generateZombie(context, playerTransf->position);
-          m_elapsedTimeFromLastGeneration = 0.0f;
+          m_elapsedTimeFromLastZombieGeneration = 0.0f;
         }
       }
 
@@ -583,7 +627,7 @@ void LevelSystem::update(ECSContext& context, real deltaTime) {
         Transformation* zombieTransf = registry->getComponent<Transformation>(zombie,
                                                                               ComponentID::Transformation);
 
-        if(playerTransf->position.distance(zombieTransf->position) > 2000.0f) {
+        if(playerTransf->position.distance(zombieTransf->position) > 1500.0f) {
           registry->destroyEntity(zombie);
         }
 
@@ -594,6 +638,13 @@ void LevelSystem::update(ECSContext& context, real deltaTime) {
   }
 
 
+
+  Bitfield weaponsComponents = buildBitfield(ComponentID::Weapon);
+  auto weapons = registry->findEntities(weaponsComponents);
+  if(context.data.roundData.intermissionActivated && weapons.size() < 3 + currentRound &&
+     m_elapsedTimeFromLastBoxGeneration > 30.0f) {
+    generateWeaponBox(context, playerTransf->position);
+  }
 
 }
 
@@ -608,15 +659,12 @@ void LevelSystem::generateZombie(ECSContext& context, const vec2& playerPos) {
   model->sprite = createSprite("zombie_idle");
   model->alpha = int(randomReal(200.0f, 255.0f));
 
+
   Transformation* transf = new Transformation();
 
-  vec2 zombiePosition = playerPos;
-  while((zombiePosition - playerPos).sqLength() < context.data.windowWidth * context.data.windowHeight) {
-    zombiePosition.x = randomReal(-context.data.windowWidth, context.data.windowWidth) + playerPos.x;
-    zombiePosition.y = randomReal(-context.data.windowHeight, context.data.windowHeight) + playerPos.y;
-  }
-
-  transf->position = zombiePosition;
+  real threshold = std::max(context.data.windowHeight, context.data.windowWidth) * 0.8f;
+  transf->position = generateRandomPosition(playerPos, threshold, 2.0f * threshold,
+                                            context.data.mapWidth, context.data.mapHeight);
   transf->angle = randomReal(0.0f, 360.0f);
   transf->scale = randomReal(0.8f, 1.2f);
 
@@ -634,8 +682,8 @@ void LevelSystem::generateZombie(ECSContext& context, const vec2& playerPos) {
   zombieComponent->stateController = new StateController();
 
   Attributes* attributes = new Attributes();
-  attributes->maxHealth = 100.0f + 100.0f * currentRound;
-  attributes->health = attributes->maxHealth;
+  attributes->maxHealth = 200.0f + 100.0f * currentRound;
+  attributes->health = attributes->maxHealth * randomReal(0.25f, 1.0f);
   attributes->damage = 5.0f + 2.5f * currentRound;
 
   registry->addComponent(zombie, model);
@@ -646,6 +694,58 @@ void LevelSystem::generateZombie(ECSContext& context, const vec2& playerPos) {
 
   zombieComponent->stateController->setState<ZombieIdle>(context, zombie);
 
+}
+
+void LevelSystem::generateWeaponBox(ECSContext& context, const vec2& playerPos) {
+
+  Registry* registry = context.registry;
+
+  Entity weaponBox = registry->createEntity();
+  WeaponType weaponType = WeaponType(int(WeaponType::PISTOL) + rand() % 3);
+  const char* boxSpriteName = "";
+  switch(weaponType) {
+  case WeaponType::PISTOL: boxSpriteName = "box_pistol"; break;
+  case WeaponType::RIFLE: boxSpriteName = "box_rifle"; break;
+  case WeaponType::SHOTGUN: boxSpriteName = "box_shotgun"; break;
+  default: break;
+  }
+
+  Model* model = new Model();
+  model->sprite = createSprite(boxSpriteName);
+
+  Transformation* transf = new Transformation();
+
+  real threshold = std::max(context.data.windowHeight, context.data.windowWidth) * 0.8f;
+  transf->position = generateRandomPosition(playerPos, threshold, 2.0f * threshold,
+                                            context.data.mapWidth, context.data.mapHeight);
+
+  Physics* physics = new Physics();
+  physics->size = 7.5f;
+  physics->mass = 9999.0f;
+
+  WeaponBox* boxComponent = new WeaponBox();
+  boxComponent->type = weaponType;
+  boxComponent->clips = rand() % 3 + 2;
+
+
+  registry->addComponent(weaponBox, model);
+  registry->addComponent(weaponBox, transf);
+  registry->addComponent(weaponBox, physics);
+  registry->addComponent(weaponBox, boxComponent);
+
+}
+
+vec2 LevelSystem::generateRandomPosition(const vec2& playerPosition, real threshold, real radius,
+                                         real width, real height) {
+  vec2 position = playerPosition;
+  while((position - playerPosition).sqLength() < threshold * threshold ||
+        isOutOfMap(position, width, height)) {
+
+    position.x = randomReal(-radius, radius) + playerPosition.x;
+    position.y = randomReal(-radius, radius) + playerPosition.y;
+  }
+
+  return position;
 }
 
 void FootprintGenerationSystem::update(ECSContext& context, real deltaTime) {
@@ -884,8 +984,6 @@ void PenetrationResolutionSystem::update(ECSContext& context, real deltaTime) {
   for(auto collision: m_unprocessedCollisions) {
     if(registry->hasComponent(collision.collision_info.entityA, ComponentID::Bullet) ||
        registry->hasComponent(collision.collision_info.entityB, ComponentID::Bullet)) {
-       // registry->hasComponent(collision.collision_info.entityB, ComponentID::Bullet) ||
-       // registry->hasComponent(collision.collision_info.entityB, ComponentID::Player)) {
       continue;
     }
 
@@ -950,7 +1048,6 @@ void BulletSystem::update(ECSContext& context, real deltaTime) {
 
     if(bullet != Constants::INVALID_ENTITY && registry->hasComponent(object, ComponentID::Zombie)) {
       Bullet* bulletComponent = registry->getComponent<Bullet>(bullet, ComponentID::Bullet);
-      Zombie* zombie = registry->getComponent<Zombie>(object, ComponentID::Zombie);
       Attributes* zombieAttributes = registry->getComponent<Attributes>(object, ComponentID::Attributes);
       zombieAttributes->health -= bulletComponent->damage;
 
@@ -992,6 +1089,7 @@ UIRenderingSystem::~UIRenderingSystem() {
   destroySprite(m_radarSprite);
   destroySprite(m_arrowSprite);
   destroySprite(m_xiconSprite);
+  destroySprite(m_circleSprite);
 }
 
 void UIRenderingSystem::init(ECSContext& context) {
@@ -1002,6 +1100,7 @@ void UIRenderingSystem::init(ECSContext& context) {
   setSpriteAnchorPoint(m_weaponSprite, 0.0f, 0.0f);
   m_arrowSprite = createSprite("ui_arrow");
   m_xiconSprite = createSprite("ui_xicon");
+  m_circleSprite = createSprite("ui_circle");
   m_lastDeltaTime = 0.0f;
 }
 
@@ -1088,37 +1187,45 @@ void UIRenderingSystem::draw(ECSContext& context) {
   vec2 radarGlobalCenter = vec2(context.data.windowWidth - radarOffsetX - radarRadius,
                                 radarOffsetY + radarRadius);
 
+  real maxRadarDistance = 1500.0f;
+
   drawSprite(m_radarSprite, int(context.data.windowWidth) - radarOffsetX, radarOffsetY,
              128, 0.2f, 0.0f, false);
 
 
-  Bitfield zombieComponents = buildBitfield(ComponentID::Transformation,
-                                            ComponentID::Zombie);
+  Bitfield zombieComponents = buildBitfield(ComponentID::Transformation, ComponentID::Zombie);
+  Bitfield boxesComponents = buildBitfield(ComponentID::Transformation, ComponentID::Weapon);
 
+  // NOTE(mizofix): Rendering circles on radar
   auto zombies = registry->findEntities(zombieComponents);
   for(auto zombie: zombies) {
-    Transformation* zombieTransform = registry->getComponent<Transformation>(zombie,
-                                                                             ComponentID::Transformation);
-    vec2 vecToZombie = zombieTransform->position - playerTransform->position;
-    real distanceToZombie = vecToZombie.length();
-    real maxRadarDistance = 1500.0f;
+    Transformation* zombieTransf = registry->getComponent<Transformation>(zombie,
+                                                                          ComponentID::Transformation);
 
-    if(distanceToZombie > 0.01) {
-      vecToZombie.x /= distanceToZombie;
-      vecToZombie.y /= distanceToZombie;
-    }
+    vec2 convertedPosition = convertToRadarCoords(radarGlobalCenter, radarRadius, maxRadarDistance,
+                                                  zombieTransf->position, playerTransform->position);
 
-    distanceToZombie = std::min(distanceToZombie, maxRadarDistance);
-
-    real convertedDistance = (distanceToZombie / maxRadarDistance) * radarRadius;
-
-    vec2 convertedPosition = radarGlobalCenter + vecToZombie * convertedDistance;
     drawSprite(m_xiconSprite, int(convertedPosition.x), int(convertedPosition.y),
-               128, 1.0f, zombieTransform->angle, false);
+               128, 1.0f, zombieTransf->angle, false);
 
 
   }
 
+  // NOTE(mizofix): Rendering boxes on radar
+  auto boxes = registry->findEntities(boxesComponents);
+  for(auto box: boxes) {
+    Transformation* boxTransf = registry->getComponent<Transformation>(box,
+                                                                       ComponentID::Transformation);
+
+    vec2 convertedPosition = convertToRadarCoords(radarGlobalCenter, radarRadius, maxRadarDistance,
+                                                  boxTransf->position, playerTransform->position);
+
+    drawSprite(m_circleSprite, int(convertedPosition.x), int(convertedPosition.y),
+               128, 1.0f, 0.0f, false);
+
+  }
+
+  // NOTE(mizofix): Rendering a player on radar
   drawSprite(m_arrowSprite, int(radarGlobalCenter.x), int(radarGlobalCenter.y),
              128, 1.0f, playerTransform->angle, false);
 
@@ -1142,4 +1249,23 @@ void UIRenderingSystem::draw(ECSContext& context) {
           remainingTime);
   drawText(textBuffer, int(context.data.windowWidth * 0.5f), 10, 0.5f, 0.0f, 0, 0, 0, false);
 
+}
+
+vec2 UIRenderingSystem::convertToRadarCoords(const vec2& radarPosition, real radarRadius, real maxDist,
+                                             const vec2& targetPosition, const vec2& playerPosition ) {
+
+  vec2 vecToTarget = targetPosition - playerPosition;
+  real distanceToTarget = vecToTarget.length();
+
+  if(distanceToTarget > 0.01) {
+    vecToTarget.x /= distanceToTarget;
+    vecToTarget.y /= distanceToTarget;
+  }
+
+  distanceToTarget = std::min(distanceToTarget, maxDist);
+
+  real convertedDistance = (distanceToTarget / maxDist) * radarRadius;
+  vec2 convertedPosition = radarPosition + vecToTarget * convertedDistance;
+
+  return convertedPosition;
 }

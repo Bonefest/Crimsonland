@@ -10,20 +10,20 @@ CrimsonlandFramework::CrimsonlandFramework(int argc, char** commands): m_lastTim
   m_worldData = parseCommands(argc, commands);
   m_worldData.maxEffectsNumber = 100000;
   m_worldData.maxPlayerSpeed = 100.0f;
-  m_worldData.maxPlayerHealth = 200.0f;
+  m_worldData.maxPlayerHealth = 100.0f;
   m_worldData.maxPlayerStamina = 100.0f;
   m_worldData.regenSpeed = 5.0f;
+  m_worldData.staminaRegenSpeed = 6.0f;
   m_worldData.roundData.currentRoundNumber = 1;
   m_worldData.roundData.elapsedTime = 0.0f;
   m_worldData.roundData.intermissionActivated = true;
-  m_worldData.roundData.roundTime = 10.0f;
+  m_worldData.roundData.roundTime = 1.0f;
 
   info("-------------------------\n");
   info("final world data values are:\n");
   info("Window size (%d, %d)\n", m_worldData.windowWidth, m_worldData.windowHeight);
   info("Map size(%.1f, %.1f)\n", m_worldData.mapWidth, m_worldData.mapHeight);
-  info("Maximal enemies number %d\n", m_worldData.numEnemies);
-  info("Maximal ammo number %d\n", m_worldData.numAmmo);
+  info("Maximal enemies number %u\n", m_worldData.numEnemies);
   info("-------------------------\n");
 
 }
