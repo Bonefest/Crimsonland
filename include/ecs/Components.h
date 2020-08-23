@@ -72,7 +72,8 @@ struct Attributes: Component {
                 maxStamina(0.0f),
                 stamina(0.0f),
                 maxSpeed(0.0f),
-                level(1) { }
+                level(1),
+                isDead(false) { }
 
 
   virtual ComponentID getID() {
@@ -93,6 +94,8 @@ struct Attributes: Component {
   int  level;
 
   real footprintElapsedTime;
+
+  bool isDead;
 };
 
 struct Physics: Component {

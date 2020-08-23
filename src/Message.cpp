@@ -47,3 +47,7 @@ void notify(Message message) {
     }
   }
 }
+
+void clearSubscribers() {
+  g_subscribers.clear();
+}

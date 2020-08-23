@@ -65,6 +65,8 @@ private:
 
   real getPlayerViewDirection();
 
+  void notifyPlayerDead();
+
   Bitfield m_playerBitfield;
   int m_lastFrameMouseWheel;
 

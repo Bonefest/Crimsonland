@@ -11,6 +11,7 @@ class Zombie;
 enum class MessageType {
   BULLET_COLLISION,
   ZOMBIE_DEAD,
+  PLAYER_DEAD,
   SPAWN_ZOMBIE,
   SPAWN_EFFECT,
   WEAPON_PICKUP,
@@ -130,5 +131,7 @@ void registerMethod(int type, void(T::*method)(Message), T* owner) {
   auto func = std::bind(method, owner, std::placeholders::_1);
   subscribeToMessage(type, func);
 }
+
+void clearSubscribers();
 
 #endif

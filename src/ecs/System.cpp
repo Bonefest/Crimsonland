@@ -198,6 +198,8 @@ void PlayerSystem::initWeapons(Player* player) {
     player->weapons.push_back(parseWeapon(weaponIt.value()));
 
   }
+
+  player->currentWeaponIndex = 0;
 }
 
 WeaponData PlayerSystem::parseWeapon(nlohmann::json& parser) {
@@ -233,7 +235,6 @@ WeaponData PlayerSystem::parseWeapon(nlohmann::json& parser) {
 }
 
 void PlayerSystem::update(ECSContext& context, real deltaTime) {
-  // TODO(mizofix): if player is dead -> notify player dead
   Registry* registry = context.registry;
   Entity player = getPlayer(context.registry, m_playerBitfield);
 
@@ -241,6 +242,13 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
   Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
   Transformation* transf = registry->getComponent<Transformation>(player, ComponentID::Transformation);
   Attributes* attributes = registry->getComponent<Attributes>(player, ComponentID::Attributes);
+
+  if(attributes->health <= 0.0f) {
+    notifyPlayerDead();
+    attributes->health = 0.0f;
+    attributes->isDead = true;
+    return;
+  }
 
   transf->angle = getPlayerViewDirection();
 
@@ -343,6 +351,12 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
     attributes->stamina = std::max(attributes->stamina - context.data.staminaRegenSpeed * deltaTime, 0.0f);
   }
 
+}
+
+void PlayerSystem::notifyPlayerDead() {
+  Message msg;
+  msg.type = int(MessageType::PLAYER_DEAD);
+  notify(msg);
 }
 
 
@@ -616,7 +630,7 @@ void LevelSystem::update(ECSContext& context, real deltaTime) {
 
       uint32_t zombiesMaxCount = std::min(currentRound * 10 + 25, context.data.numEnemies);
       if(zombies.size() < zombiesMaxCount) {
-        real zombieSpawnTime = std::max(0.7f - real(currentRound) * 0.1f, 0.1f);
+        real zombieSpawnTime = std::max(0.2f - real(currentRound) * 0.05f, 0.01f);
         if(m_elapsedTimeFromLastZombieGeneration > zombieSpawnTime) {
           generateZombie(context, playerTransf->position);
           m_elapsedTimeFromLastZombieGeneration = 0.0f;
@@ -662,8 +676,8 @@ void LevelSystem::generateZombie(ECSContext& context, const vec2& playerPos) {
 
   Transformation* transf = new Transformation();
 
-  real threshold = std::max(context.data.windowHeight, context.data.windowWidth) * 0.8f;
-  transf->position = generateRandomPosition(playerPos, threshold, 2.0f * threshold,
+  real threshold = std::max(context.data.windowHeight, context.data.windowWidth) * 0.6f;
+  transf->position = generateRandomPosition(playerPos, threshold, 1.4f * threshold,
                                             context.data.mapWidth, context.data.mapHeight);
   transf->angle = randomReal(0.0f, 360.0f);
   transf->scale = randomReal(0.8f, 1.2f);
@@ -714,6 +728,7 @@ void LevelSystem::generateWeaponBox(ECSContext& context, const vec2& playerPos) 
   model->sprite = createSprite(boxSpriteName);
 
   Transformation* transf = new Transformation();
+  transf->angle = randomReal(0.0f, 360.0f);
 
   real threshold = std::max(context.data.windowHeight, context.data.windowWidth) * 0.8f;
   transf->position = generateRandomPosition(playerPos, threshold, 2.0f * threshold,
@@ -1139,6 +1154,13 @@ void UIRenderingSystem::draw(ECSContext& context) {
   Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
   Attributes* playerAttributes = registry->getComponent<Attributes>(player, ComponentID::Attributes);
   Transformation* playerTransform = registry->getComponent<Transformation>(player, ComponentID::Transformation);
+
+  if(playerAttributes->isDead) {
+    drawText("You lose! Press [S] to restart",
+             int(context.data.windowWidth * 0.5f), int(context.data.windowHeight * 0.5f),
+             0.5f, 0.5f, 0, 0, 0, false);
+    return;
+  }
 
   const auto& weaponData = playerComponent->weapons[playerComponent->currentWeaponIndex];
 

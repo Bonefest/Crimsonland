@@ -8,22 +8,19 @@
 
 CrimsonlandFramework::CrimsonlandFramework(int argc, char** commands): m_lastTime(0.0f) {
   m_worldData = parseCommands(argc, commands);
-  m_worldData.maxEffectsNumber = 100000;
-  m_worldData.maxPlayerSpeed = 100.0f;
-  m_worldData.maxPlayerHealth = 100.0f;
-  m_worldData.maxPlayerStamina = 100.0f;
-  m_worldData.regenSpeed = 5.0f;
-  m_worldData.staminaRegenSpeed = 6.0f;
-  m_worldData.roundData.currentRoundNumber = 1;
-  m_worldData.roundData.elapsedTime = 0.0f;
-  m_worldData.roundData.intermissionActivated = true;
-  m_worldData.roundData.roundTime = 1.0f;
 
   info("-------------------------\n");
   info("final world data values are:\n");
   info("Window size (%d, %d)\n", m_worldData.windowWidth, m_worldData.windowHeight);
   info("Map size(%.1f, %.1f)\n", m_worldData.mapWidth, m_worldData.mapHeight);
   info("Maximal enemies number %u\n", m_worldData.numEnemies);
+  info("Initial plants number %u\n", m_worldData.numPlants);
+  info("Max health %d\n", int(m_worldData.maxPlayerHealth));
+  info("Max stamina %d\n", int(m_worldData.maxPlayerStamina));
+  info("Health regen speed %d\n", int(m_worldData.regenSpeed));
+  info("Stamina regen speed %d\n", int(m_worldData.staminaRegenSpeed));
+  info("Maximal effects number %d\n", int(m_worldData.maxEffectsNumber));
+  info("Initial round %d\n", int(m_worldData.roundData.currentRoundNumber));
   info("-------------------------\n");
 
 }
@@ -53,10 +50,7 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
-
   m_background = createSprite("sand");
-  initPlants();
-  initECS();
 
   m_screenTexture = createTexture(m_worldData.windowWidth, m_worldData.windowHeight);
 
@@ -64,26 +58,42 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
+  initMainPart();
+
   return true;
 }
 
+void CrimsonlandFramework::initMainPart() {
+  registerMethod<CrimsonlandFramework>(int(MessageType::PLAYER_DEAD),
+                                       &CrimsonlandFramework::onPlayerDead,
+                                       this);
+  m_playerDeadMessageReceived = false;
+  m_playerDeadMessageProcessed = false;
+
+
+  initPlants();
+  initECS();
+}
+
+
 void CrimsonlandFramework::initECS() {
-  m_context.registry = &m_registry;
+  m_registry = new Registry();
+  m_context.registry = m_registry;
   m_context.data = m_worldData;
 
-  m_systemManager.addSystem(m_context, new LevelSystem());
+  m_systemManager.addSystem(m_context, new LevelSystem(), "level_system");
 
-  m_systemManager.addSystem(m_context, new PhysicsIntegrationSystem());
-  m_systemManager.addSystem(m_context, new PhysicsCollisionSystem());
-  m_systemManager.addSystem(m_context, new PenetrationResolutionSystem());
-  m_systemManager.addSystem(m_context, new BulletSystem());
+  m_systemManager.addSystem(m_context, new PhysicsIntegrationSystem(), "integration_system");
+  m_systemManager.addSystem(m_context, new PhysicsCollisionSystem(), "collision_system");
+  m_systemManager.addSystem(m_context, new PenetrationResolutionSystem(), "penetration_system");
+  m_systemManager.addSystem(m_context, new BulletSystem(), "bullet_system");
 
-  m_systemManager.addSystem(m_context, new FootprintGenerationSystem());
-  m_systemManager.addSystem(m_context, new TrailSystem());
-  m_systemManager.addSystem(m_context, new EffectsSystem());
-  m_systemManager.addSystem(m_context, new PlayerSystem());
-  m_systemManager.addSystem(m_context, new ZombieSystem());
-  m_systemManager.addSystem(m_context, new ModelRenderingSystem());
+  m_systemManager.addSystem(m_context, new FootprintGenerationSystem(), "footprints_system");
+  m_systemManager.addSystem(m_context, new TrailSystem(), "trail_system");
+  m_systemManager.addSystem(m_context, new EffectsSystem(), "effects_system");
+  m_systemManager.addSystem(m_context, new PlayerSystem(), "player_system");
+  m_systemManager.addSystem(m_context, new ZombieSystem(), "zombie_system");
+  m_systemManager.addSystem(m_context, new ModelRenderingSystem(), "model_rendering_system");
 
   m_uiSystem = new UIRenderingSystem();
   m_uiSystem->init(m_context);
@@ -114,6 +124,38 @@ void CrimsonlandFramework::initPlants() {
 
 }
 
+void CrimsonlandFramework::clearMainPart() {
+  clearPlants();
+
+  m_systemManager.clear();
+  delete m_uiSystem;
+  delete m_registry;
+}
+
+void CrimsonlandFramework::clearPlants() {
+  for(auto bush: m_bushes) {
+    destroySprite(bush.first);
+  }
+
+  for(auto tree: m_trees) {
+    destroySprite(tree.first);
+  }
+
+  m_bushes.clear();
+  m_trees.clear();
+}
+
+void CrimsonlandFramework::restartGame() {
+  clearSubscribers();
+  clearMainPart();
+  m_worldData.roundData.intermissionActivated = true;
+  m_worldData.roundData.elapsedTime = 0.0f;
+  m_worldData.roundData.roundTime = 10.0f;
+  m_worldData.roundData.currentRoundNumber = 1;
+
+  initMainPart();
+}
+
 bool CrimsonlandFramework::Tick() {
 
   update();
@@ -124,6 +166,22 @@ bool CrimsonlandFramework::Tick() {
   return false;
 }
 
+void CrimsonlandFramework::onPlayerDead(Message message) {
+  m_playerDeadMessageReceived = true;
+  m_playerDeadMessageProcessed = false;
+}
+
+void CrimsonlandFramework::processDeadMessage() {
+  m_systemManager.removeSystem("level_system");
+  m_systemManager.removeSystem("integration_system");
+  m_systemManager.removeSystem("penetration_system");
+  m_systemManager.removeSystem("collision_system");
+  m_systemManager.removeSystem("bullet_system");
+  m_systemManager.removeSystem("player_system");
+  m_systemManager.removeSystem("zombie_system");
+
+  m_playerDeadMessageProcessed = true;
+}
 
 void CrimsonlandFramework::updateTimer() {
   float time = float(getTickCount()) / 1000.0f;
@@ -133,6 +191,30 @@ void CrimsonlandFramework::updateTimer() {
 
 
 void CrimsonlandFramework::update() {
+  if(m_playerDeadMessageReceived) {
+    m_deltaTime = 0.0f;
+
+    if(!m_playerDeadMessageProcessed) {
+      processDeadMessage();
+      getCameraPosition(m_deadCameraPosX, m_deadCameraPosY);
+    }
+
+    int cameraPosX, cameraPosY;
+
+    cameraPosX = std::cos(m_lastTime) * 17.5f + m_deadCameraPosX;
+    cameraPosY = std::sin(m_lastTime) * 35.0f + m_deadCameraPosY;
+
+    setCameraPosition(cameraPosX, cameraPosY);
+
+    if(isKeyPressed(FRKey::ACTION)) {
+      restartGame();
+
+      m_playerDeadMessageReceived = false;
+      m_playerDeadMessageProcessed = false;
+    }
+
+  }
+
   m_systemManager.updateSystems(m_context, m_deltaTime);
   m_uiSystem->update(m_context, m_deltaTime);
 }
@@ -227,7 +309,8 @@ void CrimsonlandFramework::onMouseWheel(int y) {
 }
 
 void CrimsonlandFramework::Close() {
+  clearMainPart();
+
   destroySprite(m_background);
   destroyTexture(m_screenTexture);
-  delete m_uiSystem;
 }

@@ -21,6 +21,7 @@
 class Sprite;
 
 FRAMEWORK_API void setCameraPosition(int x, int y);
+FRAMEWORK_API void getCameraPosition(int& x, int& y);
 FRAMEWORK_API void convertToCameraCoordSystem(int& x, int& y);
 
 FRAMEWORK_API Sprite* createSprite(const std::string& path = "");
@@ -82,6 +83,7 @@ enum class FRKey {
 	LEFT,
 	DOWN,
 	UP,
+    ACTION,
 	COUNT
 };
 

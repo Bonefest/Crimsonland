@@ -38,6 +38,13 @@ FRAMEWORK_API void setCameraPosition(int x, int y) {
 
 }
 
+FRAMEWORK_API void getCameraPosition(int& x, int& y) {
+
+  x = g_camera.centerPosX;
+  y = g_camera.centerPosY;
+
+}
+
 FRAMEWORK_API void convertToCameraCoordSystem(int& x, int& y) {
   x = x - g_camera.topLeftX;
   y = y - g_camera.topLeftY;
@@ -510,79 +517,77 @@ FRAMEWORK_API int run(Framework* framework)
         while ( ! done ) {
             while ( SDL_PollEvent(&event) ) {
                 switch (event.type) {
-                    case SDL_KEYUP:
-                      if(event.key.keysym.sym == SDLK_a) event.key.keysym.sym = SDLK_LEFT;
-                      if(event.key.keysym.sym == SDLK_d) event.key.keysym.sym = SDLK_RIGHT;
-                      if(event.key.keysym.sym == SDLK_w) event.key.keysym.sym = SDLK_UP;
-                      if(event.key.keysym.sym == SDLK_s) event.key.keysym.sym = SDLK_DOWN;
-                        switch (event.key.keysym.sym) {
-                            case SDLK_RIGHT:
-                            case SDLK_LEFT:
-                            case SDLK_DOWN:
-                            case SDLK_UP:
-							{
-								int key_index = (event.key.keysym.sym - SDLK_RIGHT);
-								if (GKeyState[key_index])
-								{
-									GFramework->onKeyReleased((FRKey)key_index);
-									GKeyState[key_index] = false;
-								}
-								break;
-							}
-                            case SDLK_ESCAPE:
-								done = 1;
-                            break;
-	                        default:
-		                        break;
-                        }
-                        break;
-					case SDL_KEYDOWN:
-                      if(event.key.keysym.sym == SDLK_a) event.key.keysym.sym = SDLK_LEFT;
-                      if(event.key.keysym.sym == SDLK_d) event.key.keysym.sym = SDLK_RIGHT;
-                      if(event.key.keysym.sym == SDLK_w) event.key.keysym.sym = SDLK_UP;
-                      if(event.key.keysym.sym == SDLK_s) event.key.keysym.sym = SDLK_DOWN;
-						switch (event.key.keysym.sym) {
-						case SDLK_RIGHT:
-						case SDLK_LEFT:
-						case SDLK_DOWN:
-						case SDLK_UP:
-						{
-							int key_index = (event.key.keysym.sym - SDLK_RIGHT);
-							if (!GKeyState[key_index])
-							{
-								GFramework->onKeyPressed((FRKey)key_index);
-								GKeyState[key_index] = true;
-							}
-						}
-							break;
+                case SDL_KEYUP: {
+                  if(event.key.keysym.sym == SDLK_a) event.key.keysym.sym = SDLK_LEFT;
+                  if(event.key.keysym.sym == SDLK_d) event.key.keysym.sym = SDLK_RIGHT;
+                  if(event.key.keysym.sym == SDLK_w) event.key.keysym.sym = SDLK_UP;
+                  if(event.key.keysym.sym == SDLK_s) event.key.keysym.sym = SDLK_DOWN;
+                  int key_index = -1;
 
-						default:
-							break;
-						}
-						break;
-                    case SDL_MOUSEBUTTONDOWN:
-						if (event.button.button <= SDL_BUTTON_RIGHT) {
-                          GFramework->onMouseButtonClick((FRMouseButton)(event.button.button - SDL_BUTTON_LEFT), false);
-						}
-						break;
-                    case SDL_MOUSEBUTTONUP:
-						if (event.button.button <= SDL_BUTTON_RIGHT) {
-                          GFramework->onMouseButtonClick((FRMouseButton)(event.button.button - SDL_BUTTON_LEFT), true);
-						}
-                        break;
-					case SDL_MOUSEMOTION:
-						GFramework->onMouseMove(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel);
-                        break;
-                    case SDL_MOUSEWHEEL: {
-                      int size = event.wheel.y * ((event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) ? -1: 1);
-                          GFramework->onMouseWheel(size);
-                    }
-                      break;
-                    case SDL_QUIT:
-                        done = 1;
-                        break;
-                    default:
-                        break;
+                  switch (event.key.keysym.sym) {
+                  case SDLK_r: key_index = int(FRKey::ACTION); break;
+                  case SDLK_RIGHT:
+                  case SDLK_LEFT:
+                  case SDLK_DOWN:
+                  case SDLK_UP: key_index = (event.key.keysym.sym - SDLK_RIGHT); break;
+                  case SDLK_ESCAPE:
+                    done = 1;
+                    break;
+                  default: break;
+                  }
+
+                  if (key_index != -1 && GKeyState[key_index]) {
+                    GFramework->onKeyReleased((FRKey)key_index);
+                    GKeyState[key_index] = false;
+                  }
+
+                } break;
+                case SDL_KEYDOWN: {
+                  if(event.key.keysym.sym == SDLK_a) event.key.keysym.sym = SDLK_LEFT;
+                  if(event.key.keysym.sym == SDLK_d) event.key.keysym.sym = SDLK_RIGHT;
+                  if(event.key.keysym.sym == SDLK_w) event.key.keysym.sym = SDLK_UP;
+                  if(event.key.keysym.sym == SDLK_s) event.key.keysym.sym = SDLK_DOWN;
+                  int key_index = -1;
+
+                  switch (event.key.keysym.sym) {
+                  case SDLK_r: key_index = int(FRKey::ACTION); break;
+                  case SDLK_RIGHT:
+                  case SDLK_LEFT:
+                  case SDLK_DOWN:
+                  case SDLK_UP:  key_index = (event.key.keysym.sym - SDLK_RIGHT); break;
+                  default: break;
+                  }
+
+                  if (key_index != -1 && !GKeyState[key_index]) {
+                    GFramework->onKeyPressed((FRKey)key_index);
+                    GKeyState[key_index] = true;
+                  }
+
+                } break;
+
+                case SDL_MOUSEBUTTONDOWN:
+                  if (event.button.button <= SDL_BUTTON_RIGHT) {
+                    GFramework->onMouseButtonClick((FRMouseButton)(event.button.button - SDL_BUTTON_LEFT), false);
+                  }
+                  break;
+                case SDL_MOUSEBUTTONUP:
+                  if (event.button.button <= SDL_BUTTON_RIGHT) {
+                    GFramework->onMouseButtonClick((FRMouseButton)(event.button.button - SDL_BUTTON_LEFT), true);
+                  }
+                  break;
+                case SDL_MOUSEMOTION:
+                  GFramework->onMouseMove(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel);
+                  break;
+                case SDL_MOUSEWHEEL: {
+                  int size = event.wheel.y * ((event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) ? -1: 1);
+                  GFramework->onMouseWheel(size);
+                }
+                  break;
+                case SDL_QUIT:
+                  done = 1;
+                  break;
+                default:
+                  break;
                 }
             }
 

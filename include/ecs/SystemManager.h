@@ -4,19 +4,29 @@
 #include "ecs/System.h"
 
 #include <list>
+#include <string>
+#include <unordered_map>
 
 class SystemManager {
 public:
 
   ~SystemManager() {
-    for(auto system: m_systems) {
-      delete system;
-    }
+    clear();
   }
 
-  void addSystem(ECSContext& context, System* system) {
+  void addSystem(ECSContext& context, System* system, const std::string& name) {
+    Assert(m_systemPairs.emplace(name, system).second);
     m_systems.push_back(system);
     system->init(context);
+  }
+
+  void removeSystem(const std::string& name) {
+    auto systemIt = m_systemPairs.find(name);
+    if(systemIt != m_systemPairs.end()) {
+      m_systems.remove(systemIt->second);
+      delete systemIt->second;
+      m_systemPairs.erase(systemIt);
+    }
   }
 
   void updateSystems(ECSContext& context, real deltaTime) {
@@ -31,8 +41,20 @@ public:
     }
   }
 
+  void clear() {
+    for(auto system: m_systems) {
+      delete system;
+    }
+
+    m_systemPairs.clear();
+    m_systems.clear();
+  }
+
 private:
+
+  std::unordered_map<std::string, System*> m_systemPairs;
   std::list<System*> m_systems;
+
 };
 
 #endif

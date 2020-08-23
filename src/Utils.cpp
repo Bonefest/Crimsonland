@@ -6,7 +6,6 @@
 const static char* line = "-------------------------\n";
 const static char* error_header = "[error]";
 const static char* warning_header = "[warning]";
-const static char* note_header = "[note]";
 
 const static int MIN_SCREENW = 320;
 const static int MIN_SCREENH = 240;
@@ -15,8 +14,32 @@ const static int MIN_AMMO = 5;
 const static int MAX_AMMO = 20;
 
 const static int MIN_ENEMIES = 5;
-const static int MAX_ENEMIES = 20;
+const static int MAX_ENEMIES = 200;
 
+const static int MAX_PLANTS = 100;
+const static int MIN_PLANTS = 1;
+
+const static int MAX_POINTS = 10000;
+const static int MIN_POINTS = 1;
+
+const static int MIN_REGEN = 0;
+const static int MAX_REGEN = 10000;
+
+const static int MIN_EFFECTS = 0;
+const static int MAX_EFFECTS = 10000;
+
+const static int MIN_ROUND = 1;
+const static int MAX_ROUND = 10;
+
+
+static int strCaseCmp(const char* strA, const char* strB) {
+  const char* ptrA = strA, *ptrB = strB;
+  for(;(tolower(*ptrA) == tolower(*ptrB)) && *ptrA; ptrA++, ptrB++);
+
+  return (*ptrA == *ptrB) ?  0 :
+         (*ptrA < *ptrB)  ? -1 :
+                             1;
+}
 
 // NOTE(mizofix): current version is not cross-platform
 WorldData parseCommands(int argc, char** commands) {
@@ -30,16 +53,26 @@ WorldData parseCommands(int argc, char** commands) {
   };
 
   WorldData result {
-    MIN_ENEMIES, MIN_AMMO,
+    MIN_ENEMIES, 50,
     MIN_SCREENW, MIN_SCREENH,
-    MIN_SCREENW, MIN_SCREENH
+    MIN_SCREENW, MIN_SCREENH,
+
+    100, 100, 100, 5.0f, 6.0f,
+
+    10000
+
   };
+
+  result.roundData = {};
+  result.roundData.roundTime = 10.0f;
+  result.roundData.currentRoundNumber = 1;
+  result.roundData.intermissionActivated = true;
 
   int i = 1;
   while(i < argc) {
     bool isNotLast = (argc - i) > 1;
     // TODO(mizofix): move strcasecmp to platfrom-independent layer
-    if(strcasecmp(commands[i], "-help") == 0) {
+    if(strCaseCmp(commands[i], "-help") == 0) {
       printf("\n%s", line);
       printf("    Help\n");
       printf("%s\n", line);
@@ -48,12 +81,24 @@ WorldData parseCommands(int argc, char** commands) {
              "  (minimal width %d, minimal height %d)\n", MIN_SCREENW, MIN_SCREENH);
       printf(" -num_enemies [num] - to set desired maximal number of enemies\n"
              "  (minimal %d maximal %d)\n", MIN_ENEMIES, MAX_ENEMIES);
-
-      // TODO(mizofix)
+      printf(" -num_plants [num] - to set desired maximal number of plants\n"
+             "  (minimal %d maximal %d)\n", MIN_PLANTS, MAX_PLANTS);
+      printf(" -max_health [num] - to set desired max player health\n"
+             "  (minimal %d maximal %d)\n", MIN_POINTS, MAX_POINTS);
+      printf(" -max_stamina [num] - to set desired max player stamina\n"
+             "  (minimal %d maximal %d)\n", MIN_POINTS, MAX_POINTS);
+      printf(" -hp_regen [num] - to set player health regeneration speed\n"
+             "  (minimal %d maximal %d)\n", MIN_REGEN, MAX_POINTS);
+      printf(" -stamina_regen [num] - to set player stamina regeneration speed\n"
+             "  (minimal %d maximal %d)\n", MIN_REGEN, MAX_REGEN);
+      printf(" -num_effects [num] - to set desired maximal number of effects\n"
+             "  (minimal %d maximal %d)\n", MIN_EFFECTS, MAX_EFFECTS);
+      printf(" -start_round [num] - to set initial round number\n"
+             "  (minimal %d maximal %d)\n", MIN_ROUND, MAX_ROUND);
 
       exit(0);
     }
-    else if(strcasecmp(commands[i], "-window") == 0 && isNotLast) {
+    else if(strCaseCmp(commands[i], "-window") == 0 && isNotLast) {
       char* windowData = commands[i + 1];
 
       int width, height;
@@ -81,7 +126,7 @@ WorldData parseCommands(int argc, char** commands) {
       i += 2;
     }
 
-    else if(strcasecmp(commands[i], "-map") == 0 && isNotLast) {
+    else if(strCaseCmp(commands[i], "-map") == 0 && isNotLast) {
       char* mapData = commands[i + 1];
 
       int width, height;
@@ -99,8 +144,36 @@ WorldData parseCommands(int argc, char** commands) {
       i += 2;
     }
 
-    else if(strcasecmp(commands[i], "-num_enemies") == 0 && isNotLast) {
+    else if(strCaseCmp(commands[i], "-num_enemies") == 0 && isNotLast) {
       result.numEnemies = clamp(atoi(commands[i + 1]), MIN_ENEMIES, MAX_ENEMIES);
+      i += 2;
+    }
+    else if(strCaseCmp(commands[i], "-num_plants") == 0 && isNotLast) {
+      result.numPlants = clamp(atoi(commands[i + 1]), MIN_PLANTS, MAX_PLANTS);
+      i += 2;
+    }
+    else if(strCaseCmp(commands[i], "-max_health") == 0 && isNotLast) {
+      result.maxPlayerHealth = clamp(atoi(commands[i + 1]), MIN_POINTS, MAX_POINTS);
+      i += 2;
+    }
+    else if(strCaseCmp(commands[i], "-max_stamina") == 0 && isNotLast) {
+      result.maxPlayerStamina = clamp(atoi(commands[i + 1]), MIN_POINTS, MAX_POINTS);
+      i += 2;
+    }
+    else if(strCaseCmp(commands[i], "-hp_regen") == 0 && isNotLast) {
+      result.regenSpeed = clamp(atoi(commands[i + 1]), MIN_REGEN, MAX_REGEN);
+      i += 2;
+    }
+    else if(strCaseCmp(commands[i], "-stamina_regen") == 0 && isNotLast) {
+      result.staminaRegenSpeed = clamp(atoi(commands[i + 1]), MIN_REGEN, MAX_REGEN);
+      i += 2;
+    }
+    else if(strCaseCmp(commands[i], "-num_effects") == 0 && isNotLast) {
+      result.maxEffectsNumber = clamp(atoi(commands[i + 1]), MIN_EFFECTS, MAX_EFFECTS);
+      i += 2;
+    }
+    else if(strCaseCmp(commands[i], "-start_round") == 0 && isNotLast) {
+      result.roundData.currentRoundNumber = clamp(atoi(commands[i + 1]), MIN_ROUND, MAX_ROUND);
       i += 2;
     }
 

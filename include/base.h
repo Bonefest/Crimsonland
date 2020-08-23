@@ -49,8 +49,14 @@ public:
 
 private:
 
+  void initMainPart();
   void initECS();
   void initPlants();
+
+  void clearMainPart();
+  void clearPlants();
+
+  void restartGame();
 
   void update();
   void draw();
@@ -61,15 +67,15 @@ private:
   void drawPlants(std::vector<std::pair<Sprite*, vec2>>& plants);
   void drawUI();
 
-  void clearPlants();
+  void onPlayerDead(Message message);
+  void processDeadMessage();
 
   WorldData m_worldData;
 
-  Registry           m_registry;
+  Registry*          m_registry;
   ECSContext         m_context;
   UIRenderingSystem* m_uiSystem;
   SystemManager      m_systemManager;
-
 
   Sprite* m_background;
   std::vector<std::pair<Sprite*, vec2>> m_bushes;
@@ -79,8 +85,15 @@ private:
 
   Program m_bumpProgram;
 
+  bool m_playerDeadMessageReceived;
+  bool m_playerDeadMessageProcessed;
+
+  int  m_deadCameraPosX;
+  int  m_deadCameraPosY;
+
   float m_lastTime;
   float m_deltaTime;
+
 };
 
 

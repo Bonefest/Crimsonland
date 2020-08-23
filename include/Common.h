@@ -24,6 +24,7 @@ struct RoundData {
 struct WorldData {
 
   uint32_t  numEnemies;
+  uint32_t  numPlants;
 
   int  windowWidth;
   int  windowHeight;
