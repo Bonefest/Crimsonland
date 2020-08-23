@@ -35,8 +35,11 @@ void main() {
   float xdist = texturePosition.x - 0.5;
   float ydist = texturePosition.y - 0.5;
 
-  float valx = pow(xdist, 2.0);
-  float valy = pow(ydist, 2.0);
+  //float valx = pow(xdist, 2.0);
+  //float valy = pow(ydist, 2.0);
+  float valx = 0.0f;
+  float valy = 0.0f;
+
   if(xdist < 0.0) valx = -valx;
   if(ydist < 0.0) valy = -valy;
 

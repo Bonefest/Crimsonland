@@ -131,8 +131,6 @@ void PlayerShoot::update(ECSContext& context, Entity player, real deltaTime) {
   updateAnimation(model->sprite, deltaTime);
   if(isAnimationFinished(model->sprite)) {
 
-    // TODO(mizofix): generate bullet based on weapon type
-
     Transformation* transf = context.registry->getComponent<Transformation>(player,
                                                                             ComponentID::Transformation);
 
@@ -155,7 +153,6 @@ void PlayerShoot::update(ECSContext& context, Entity player, real deltaTime) {
 
     vec2 explosionPosition = bulletPosition + playerHeading * 11.0f;
     generateExplosion(explosionPosition, transf->angle);
-    // /////////////////////
 
     playerComponent->weapons[playerComponent->currentWeaponIndex].ammo--;
     if(needToReload(playerComponent)) {

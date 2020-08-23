@@ -104,7 +104,7 @@ void TrailSystem::draw(ECSContext& context) {
       int alpha = int((1.0f - particle.elapsedTime / trailComponent->lifetime) * 255.0f);
       drawRect(round(particle.position.x),round(particle.position.y),
                trailComponent->size, trailComponent->size,
-               128, 128, 128, alpha);
+               128, 128, 128, alpha, 0.5f, 0.5f);
     }
   }
 }
@@ -855,18 +855,22 @@ void PhysicsIntegrationSystem::update(ECSContext& context, real deltaTime) {
 
       physics->velocity = newVelocity;
       transf->position += physics->velocity * deltaTime;
-      if(transf->position.x > context.data.mapWidth * 0.5f) {
-        transf->position.x = context.data.mapWidth * 0.5f;
-      }
-      else if(transf->position.x < -context.data.mapWidth * 0.5f) {
-        transf->position.x = -context.data.mapWidth * 0.5f;
-      }
+      if(!registry->hasComponent(entity, ComponentID::Bullet)) {
 
-      if(transf->position.y > context.data.mapHeight * 0.5f) {
-        transf->position.y = context.data.mapHeight * 0.5f;
-      }
-      else if(transf->position.y < -context.data.mapHeight * 0.5f) {
-        transf->position.y = -context.data.mapHeight * 0.5f;
+        if(transf->position.x > context.data.mapWidth * 0.5f) {
+          transf->position.x = context.data.mapWidth * 0.5f;
+        }
+        else if(transf->position.x < -context.data.mapWidth * 0.5f) {
+          transf->position.x = -context.data.mapWidth * 0.5f;
+        }
+
+        if(transf->position.y > context.data.mapHeight * 0.5f) {
+          transf->position.y = context.data.mapHeight * 0.5f;
+        }
+        else if(transf->position.y < -context.data.mapHeight * 0.5f) {
+          transf->position.y = -context.data.mapHeight * 0.5f;
+        }
+
       }
     }
 
@@ -1105,6 +1109,7 @@ UIRenderingSystem::~UIRenderingSystem() {
   destroySprite(m_arrowSprite);
   destroySprite(m_xiconSprite);
   destroySprite(m_circleSprite);
+  destroySprite(m_reticleSprite);
 }
 
 void UIRenderingSystem::init(ECSContext& context) {
@@ -1116,6 +1121,7 @@ void UIRenderingSystem::init(ECSContext& context) {
   m_arrowSprite = createSprite("ui_arrow");
   m_xiconSprite = createSprite("ui_xicon");
   m_circleSprite = createSprite("ui_circle");
+  m_reticleSprite = createSprite("ui_reticle");
   m_lastDeltaTime = 0.0f;
 }
 
@@ -1156,7 +1162,7 @@ void UIRenderingSystem::draw(ECSContext& context) {
   Transformation* playerTransform = registry->getComponent<Transformation>(player, ComponentID::Transformation);
 
   if(playerAttributes->isDead) {
-    drawText("You lose! Press [S] to restart",
+    drawText("You lose! Press [R] to restart",
              int(context.data.windowWidth * 0.5f), int(context.data.windowHeight * 0.5f),
              0.5f, 0.5f, 0, 0, 0, false);
     return;
@@ -1186,7 +1192,7 @@ void UIRenderingSystem::draw(ECSContext& context) {
   int hpBarOffsetY = hpBarTextOffsetY + 24;
   int hpBarWidth = int(std::max(playerAttributes->health / playerAttributes->maxHealth, 0.0f) * barWidth);
   drawRect(wpOffsetX, hpBarOffsetY, hpBarWidth, barHeight,
-           108, 108, 108, barAlpha, false);
+           108, 108, 108, barAlpha, 0.0f, 0.0f, false);
 
   // NOTE(mizofix): Stamina bar rendering
   int staminaBarTextOffsetY = hpBarOffsetY + barHeight + 10;
@@ -1195,7 +1201,7 @@ void UIRenderingSystem::draw(ECSContext& context) {
   int staminaBarOffsetY = staminaBarTextOffsetY + 24;
   int staminaBarWidth = int(std::max(playerAttributes->stamina / playerAttributes->maxStamina, 0.0f) * barWidth);
   drawRect(wpOffsetX, staminaBarOffsetY, staminaBarWidth, barHeight,
-           162, 162, 162, barAlpha, false);
+           162, 162, 162, barAlpha, 0.0f, 0.0f, false);
 
   // NOTE(mizofix): Radar rendering
 
@@ -1259,10 +1265,12 @@ void UIRenderingSystem::draw(ECSContext& context) {
   sprintf(textBuffer, "%4d, %4d", int(playerTransform->position.x), int(playerTransform->position.y));
   drawText(textBuffer, coordsTextOffsetX, coordsTextOffsetY, 0.5f, 0.5f, 0, 0, 0, false);
 
+  // NOTE(mizofix): Rendering FPS
   real fps = 1.0f / m_lastDeltaTime;
   sprintf(textBuffer, "FPS: %d", int(fps));
   drawText(textBuffer, 0, context.data.windowHeight, 0.0f, 1.0f, 0, 0, 0, false);
 
+  // NOTE(mizofix): Rendering current round info
   const char* roundStatus = (context.data.roundData.intermissionActivated) ? "begins" : "ends";
   int remainingTime = round(context.data.roundData.roundTime - context.data.roundData.elapsedTime);
   sprintf(textBuffer, "Round #%02d %s in %d seconds",
@@ -1270,6 +1278,23 @@ void UIRenderingSystem::draw(ECSContext& context) {
           roundStatus,
           remainingTime);
   drawText(textBuffer, int(context.data.windowWidth * 0.5f), 10, 0.5f, 0.0f, 0, 0, 0, false);
+
+  // NOTE(mizofix): Rendering current round info
+  int mouseX, mouseY;
+  getCursorPos(&mouseX, &mouseY);
+
+  int screenW, screenH;
+  getScreenSize(screenW, screenH);
+
+  vec2 playerHead = degToVec(playerTransform->angle);
+  vec2 playerSide = playerHead.perp();
+  vec2 reticleOffset = playerComponent->weapons[playerComponent->currentWeaponIndex].handOffset * 2.0f;
+
+  vec2 realPosition = playerHead * reticleOffset.x + playerSide * reticleOffset.y + vec2(mouseX, mouseY);
+
+
+  // TODO(mizofix): Thanks to a shader, we should recalculate retail position based on distance from the center
+  drawSprite(m_reticleSprite, round(realPosition.x), round(realPosition.y), 192, 1.0f, 0.0f, false);
 
 }
 

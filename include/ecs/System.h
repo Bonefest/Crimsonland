@@ -201,6 +201,7 @@ private:
   Sprite*    m_arrowSprite;
   Sprite*    m_xiconSprite;
   Sprite*    m_circleSprite;
+  Sprite*    m_reticleSprite;
 
   real       m_lastDeltaTime;
 };

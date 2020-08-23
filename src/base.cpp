@@ -50,6 +50,8 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
+  showCursor(false);
+
   m_background = createSprite("sand");
 
   m_screenTexture = createTexture(m_worldData.windowWidth, m_worldData.windowHeight);

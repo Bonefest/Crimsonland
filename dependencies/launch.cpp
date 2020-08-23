@@ -143,11 +143,15 @@ static bool animationIsLoaded(const std::string& name) {
 
 FRAMEWORK_API void drawRect(int x, int y, int w, int h,
                             int r, int g, int b, int a,
+                            float anchorX, float anchorY,
                             bool relativeToCamera) {
   int relX = x, relY = y;
   if(relativeToCamera) {
     convertToCameraCoordSystem(relX, relY);
   }
+
+  relX -= round(w * anchorX);
+  relY -= round(h * anchorY);
 
   SDL_Rect rect;
   rect.x = relX;
@@ -413,7 +417,7 @@ FRAMEWORK_API int run(Framework* framework)
     flags = SDL_WINDOW_HIDDEN | SDL_RENDERER_TARGETTEXTURE;
 	if (fullscreen) {
 		SDL_ShowCursor(0);
-        //flags |= SDL_WINDOW_FULLSCREEN;
+        //flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
     }
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_VIDEO_OPENGL) == -1) {
@@ -455,20 +459,20 @@ FRAMEWORK_API int run(Framework* framework)
 	}
 
 
-    // if (SDL_CreateWindowAndRenderer(0, 0, flags | SDL_WINDOW_OPENGL, &window, &g_renderer) < 0) {
-    //     fprintf(stderr, "SDL_CreateWindowAndRenderer() failed: %s\n", SDL_GetError());
-    //     return(2);
-    // } else {
-    //     GFramework->renderer = g_renderer;
-    // }
+    if (SDL_CreateWindowAndRenderer(0, 0, flags | SDL_WINDOW_OPENGL, &window, &g_renderer) < 0) {
+        fprintf(stderr, "SDL_CreateWindowAndRenderer() failed: %s\n", SDL_GetError());
+        return(2);
+    } else {
+        GFramework->renderer = g_renderer;
+    }
 
-    window = SDL_CreateWindow("Crimsonland", SDL_WINDOWPOS_CENTERED,
-                               SDL_WINDOWPOS_CENTERED, g_width, g_height, 0);
+    // window = SDL_CreateWindow("Crimsonland", SDL_WINDOWPOS_CENTERED,
+    //                            SDL_WINDOWPOS_CENTERED, g_width, g_height, 0);
 
-    g_window = window;
+    // g_window = window;
 
-	g_renderer = SDL_CreateRenderer(window, -1,
-                                  SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
+	// g_renderer = SDL_CreateRenderer(window, -1,
+    //                               SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
 
     SDL_SetRenderDrawBlendMode(g_renderer, SDL_BLENDMODE_BLEND);
 

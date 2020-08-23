@@ -47,6 +47,7 @@ FRAMEWORK_API bool loadAnimations(const std::string& path);
 
 FRAMEWORK_API void drawRect(int x, int y, int w, int h,
                             int r, int g, int b, int a,
+                            float anchorX = 0.0f, float anchorY = 0.0f,
                             bool relativeToCamera = true);
 
 FRAMEWORK_API void drawText(const std::string& text,
