@@ -16,6 +16,7 @@
 struct RoundData {
   int  currentRoundNumber;
   real elapsedTime;
+  real roundTime;
 
   bool intermissionActivated;
 };

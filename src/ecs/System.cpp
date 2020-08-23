@@ -248,7 +248,7 @@ void PlayerSystem::update(ECSContext& context, real deltaTime) {
   real playerSpeed = context.data.maxPlayerSpeed;
   if(attributes->stamina / attributes->maxStamina < 0.35f) {
     playerSpeed *= 0.4f;
-  } 
+  }
 
   physics->maxSpeed = playerSpeed;
 
@@ -386,43 +386,6 @@ void ZombieSystem::init(ECSContext& context) {
                                      ComponentID::Transformation,
                                      ComponentID::Physics,
                                      ComponentID::Zombie);
-
-  Registry* registry = context.registry;
-  Entity zombie = registry->createEntity();
-
-  Model* model = new Model();
-  model->sprite = createSprite("zombie_idle");
-  model->alpha = 255;
-
-  Transformation* transf = new Transformation();
-  transf->position = vec2(300.0f, 300.0f);
-  transf->angle = 0.0f;
-
-  Physics* physics = new Physics();
-  physics->size = 20.0f;
-  physics->maxSpeed = 50.0f;
-
-  Zombie* zombieComponent = new Zombie();
-  zombieComponent->wanderingTarget = transf->position;
-  zombieComponent->fov = cos(degToRad(45.0f));
-  zombieComponent->hearingDistance = 50.0f;
-  zombieComponent->attackDistance = 70.0f;
-  zombieComponent->followingDistance = 250.0f;
-  zombieComponent->sawPlayerRecently = false;
-  zombieComponent->stateController = new StateController();
-
-  Attributes* attributes = new Attributes();
-  attributes->maxHealth = 500.0f;
-  attributes->health = 500.0f;
-  attributes->damage = 20.0f;
-
-  registry->addComponent(zombie, model);
-  registry->addComponent(zombie, transf);
-  registry->addComponent(zombie, physics);
-  registry->addComponent(zombie, zombieComponent);
-  registry->addComponent(zombie, attributes);
-
-  zombieComponent->stateController->setState<ZombieIdle>(context, zombie);
 }
 
 void ZombieSystem::update(ECSContext& context, real deltaTime) {
@@ -437,7 +400,6 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
   Entity player = getPlayer(registry, playerComponents);
   Transformation* playerTransform = registry->getComponent<Transformation>(player,
                                                                            ComponentID::Transformation);
-  Physics* playerPhysics = registry->getComponent<Physics>(player, ComponentID::Physics);
   Player* playerComponent = registry->getComponent<Player>(player, ComponentID::Player);
 
   vec2 playerDirection = degToVec(playerTransform->angle);
@@ -454,10 +416,11 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
     Attributes* zombieAttributes = registry->getComponent<Attributes>(zombie, ComponentID::Attributes);
 
     if(zombieAttributes->health <= 0.0f) {
+      real remainingTime = context.data.roundData.roundTime - context.data.roundData.elapsedTime;
       proceededZombies.push_back(zombie);
       generateEffect(EffectType::ZOMBIE_DEATH,
                      zombieTransform->position,
-                     1.0f, zombieTransform->angle, 15.0f,
+                     zombieTransform->scale, zombieTransform->angle, remainingTime,
                      true);
       continue;
     }
@@ -515,6 +478,20 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
         vecToTarget.x /= distanceToTarget;
         vecToTarget.y /= distanceToTarget;
 
+        if(zombieComponent->wanderingTarget.x < -context.data.mapWidth * 0.5f) {
+          zombieComponent->wanderingTarget.x = -context.data.mapWidth * 0.5f + randomReal(0.0f, 200.0f);
+        }
+        else if(zombieComponent->wanderingTarget.x > context.data.mapWidth * 0.5f) {
+          zombieComponent->wanderingTarget.x = context.data.mapWidth * 0.5f - randomReal(0.0f, 200.0f);
+        }
+
+        if(zombieComponent->wanderingTarget.y < -context.data.mapHeight * 0.5f) {
+          zombieComponent->wanderingTarget.y = -context.data.mapHeight * 0.5f + randomReal(0.0f, 200.0f);
+        }
+        else if(zombieComponent->wanderingTarget.y > context.data.mapHeight * 0.5f) {
+          zombieComponent->wanderingTarget.y = context.data.mapHeight * 0.5f - randomReal(0.0f,200.0f);
+        }
+
         if(distanceToTarget > 50.0f) {
           zombiePhysics->velocity = vecToTarget * zombiePhysics->maxSpeed;
           zombieTransform->angle = vecToDeg(vecToTarget);
@@ -524,19 +501,6 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
               real rndX = randomReal(-200.0f, 200.0f);
               real rndY = randomReal(-200.0f, 200.0f);
               zombieComponent->wanderingTarget = zombieTransform->position + vec2(rndX, rndY);
-              if(zombieComponent->wanderingTarget.x < -context.data.mapWidth * 0.5f) {
-                zombieComponent->wanderingTarget.x = -context.data.mapWidth * 0.5f + randomReal(0.0f, 200.0f);
-              }
-              else if(zombieComponent->wanderingTarget.x > context.data.mapWidth * 0.5f) {
-                zombieComponent->wanderingTarget.x = context.data.mapWidth * 0.5f - randomReal(0.0f, 200.0f);
-              }
-
-              if(zombieComponent->wanderingTarget.y < -context.data.mapHeight * 0.5f) {
-                zombieComponent->wanderingTarget.y = -context.data.mapHeight * 0.5f + randomReal(0.0f, 200.0f);
-              }
-              else if(zombieComponent->wanderingTarget.y > context.data.mapHeight * 0.5f) {
-                zombieComponent->wanderingTarget.y = context.data.mapHeight * 0.5f - randomReal(0.0f, 200.0f);
-              }
 
               zombieComponent->wanderingElapsedTime = 0.0f;
           }
@@ -571,8 +535,9 @@ void LevelSystem::update(ECSContext& context, real deltaTime) {
   context.data.roundData.elapsedTime += deltaTime;
 
   if(context.data.roundData.intermissionActivated) {
-    if(context.data.roundData.elapsedTime > 20.0f) {
-      // notify round has begun
+    if(context.data.roundData.elapsedTime > context.data.roundData.roundTime) {
+      // TODO(mizofix): notify round has begun
+      context.data.roundData.roundTime = context.data.roundData.currentRoundNumber * 30.0f + 60.0f;
       context.data.roundData.intermissionActivated = false;
       context.data.roundData.elapsedTime = 0.0f;
     }
@@ -586,12 +551,12 @@ void LevelSystem::update(ECSContext& context, real deltaTime) {
     auto zombies = registry->findEntities(zombieComponents);
 
     int currentRound = context.data.roundData.currentRoundNumber;
-    real roundLength = currentRound * 30.0f + 60.0f;
 
-    if(context.data.roundData.elapsedTime > roundLength) {
+    if(context.data.roundData.elapsedTime > context.data.roundData.roundTime) {
 
       context.data.roundData.intermissionActivated = true;
       context.data.roundData.elapsedTime = 0.0f;
+      context.data.roundData.roundTime = 20.0f;
       context.data.roundData.currentRoundNumber++;
 
       for(auto zombie: zombies) {
@@ -605,8 +570,7 @@ void LevelSystem::update(ECSContext& context, real deltaTime) {
 
     } else {
 
-      int zombiesMaxCount = currentRound * 10 + 25;
-      
+      std::size_t zombiesMaxCount = currentRound * 10 + 25;
       if(zombies.size() < zombiesMaxCount) {
         real zombieSpawnTime = std::max(1.0f - real(currentRound) * 0.1f, 0.5f);
         if(m_elapsedTimeFromLastGeneration < zombieSpawnTime) {
@@ -680,7 +644,7 @@ void LevelSystem::generateZombie(ECSContext& context, const vec2& playerPos) {
   registry->addComponent(zombie, zombieComponent);
   registry->addComponent(zombie, attributes);
 
-  zombieComponent->stateController->setState<ZombieIdle>(context, zombie);  
+  zombieComponent->stateController->setState<ZombieIdle>(context, zombie);
 
 }
 
@@ -919,9 +883,9 @@ void PenetrationResolutionSystem::update(ECSContext& context, real deltaTime) {
 
   for(auto collision: m_unprocessedCollisions) {
     if(registry->hasComponent(collision.collision_info.entityA, ComponentID::Bullet) ||
-       registry->hasComponent(collision.collision_info.entityA, ComponentID::Player) ||
-       registry->hasComponent(collision.collision_info.entityB, ComponentID::Bullet) ||
-       registry->hasComponent(collision.collision_info.entityB, ComponentID::Player)) {
+       registry->hasComponent(collision.collision_info.entityB, ComponentID::Bullet)) {
+       // registry->hasComponent(collision.collision_info.entityB, ComponentID::Bullet) ||
+       // registry->hasComponent(collision.collision_info.entityB, ComponentID::Player)) {
       continue;
     }
 
@@ -945,12 +909,12 @@ void PenetrationResolutionSystem::update(ECSContext& context, real deltaTime) {
       direction.x /= distance;
       direction.y /= distance;
 
-      // TODO(mizofix): penetration based on mass
-      transfA->position -= direction * ((totalSize - distance) * 0.5f);
-      transfB->position += direction * ((totalSize - distance) * 0.5f);
+      real totalMass = physicsA->mass + physicsB->mass;
+      Assert(totalMass > 0.0f);
+      real percentA = 1.0f - physicsA->mass / totalMass;
 
-      // physicsA->velocity = direction * (-physicsA->maxSpeed);
-      // physicsB->velocity = direction * physicsB->maxSpeed;
+      transfA->position -= direction * ((totalSize - distance) * percentA);
+      transfB->position += direction * ((totalSize - distance) * (1.0f - percentA));
     }
   }
 
@@ -1009,7 +973,7 @@ void BulletSystem::update(ECSContext& context, real deltaTime) {
   auto bullets = registry->findEntities(desiredComponents);
   for(auto bullet: bullets) {
     Bullet* bulletComponent = registry->getComponent<Bullet>(bullet, ComponentID::Bullet);
-    bulletComponent->elapsedTime -= deltaTime;
+    bulletComponent->elapsedTime += deltaTime;
 
     if(bulletComponent->elapsedTime > bulletComponent->lifetime) {
       registry->destroyEntity(bullet);
@@ -1038,6 +1002,7 @@ void UIRenderingSystem::init(ECSContext& context) {
   setSpriteAnchorPoint(m_weaponSprite, 0.0f, 0.0f);
   m_arrowSprite = createSprite("ui_arrow");
   m_xiconSprite = createSprite("ui_xicon");
+  m_lastDeltaTime = 0.0f;
 }
 
 
@@ -1063,6 +1028,7 @@ void UIRenderingSystem::update(ECSContext& context, real deltaTime) {
     setAnimation(m_weaponSprite, "ui_shotgun");
   }
 
+  m_lastDeltaTime = deltaTime;
 }
 
 void UIRenderingSystem::draw(ECSContext& context) {
@@ -1122,7 +1088,6 @@ void UIRenderingSystem::draw(ECSContext& context) {
   vec2 radarGlobalCenter = vec2(context.data.windowWidth - radarOffsetX - radarRadius,
                                 radarOffsetY + radarRadius);
 
-  
   drawSprite(m_radarSprite, int(context.data.windowWidth) - radarOffsetX, radarOffsetY,
              128, 0.2f, 0.0f, false);
 
@@ -1142,7 +1107,6 @@ void UIRenderingSystem::draw(ECSContext& context) {
       vecToZombie.x /= distanceToZombie;
       vecToZombie.y /= distanceToZombie;
     }
-      
 
     distanceToZombie = std::min(distanceToZombie, maxRadarDistance);
 
@@ -1158,5 +1122,24 @@ void UIRenderingSystem::draw(ECSContext& context) {
   drawSprite(m_arrowSprite, int(radarGlobalCenter.x), int(radarGlobalCenter.y),
              128, 1.0f, playerTransform->angle, false);
 
+
+  char textBuffer[64];
+
+  int coordsTextOffsetY = int(radarGlobalCenter.y + radarRadius + 20.0f);
+  int coordsTextOffsetX = int(radarGlobalCenter.x);
+  sprintf(textBuffer, "%4d, %4d", int(playerTransform->position.x), int(playerTransform->position.y));
+  drawText(textBuffer, coordsTextOffsetX, coordsTextOffsetY, 0.5f, 0.5f, 0, 0, 0, false);
+
+  real fps = 1.0f / m_lastDeltaTime;
+  sprintf(textBuffer, "FPS: %d", int(fps));
+  drawText(textBuffer, 0, context.data.windowHeight, 0.0f, 1.0f, 0, 0, 0, false);
+
+  const char* roundStatus = (context.data.roundData.intermissionActivated) ? "begins" : "ends";
+  int remainingTime = round(context.data.roundData.roundTime - context.data.roundData.elapsedTime);
+  sprintf(textBuffer, "Round #%02d %s in %d seconds",
+          context.data.roundData.currentRoundNumber,
+          roundStatus,
+          remainingTime);
+  drawText(textBuffer, int(context.data.windowWidth * 0.5f), 10, 0.5f, 0.0f, 0, 0, 0, false);
 
 }

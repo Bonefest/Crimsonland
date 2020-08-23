@@ -186,6 +186,7 @@ private:
   Sprite*    m_arrowSprite;
   Sprite*    m_xiconSprite;
 
+  real       m_lastDeltaTime;
 };
 
 #endif

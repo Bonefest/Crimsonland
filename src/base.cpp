@@ -15,7 +15,8 @@ CrimsonlandFramework::CrimsonlandFramework(int argc, char** commands): m_lastTim
   m_worldData.regenSpeed = 5.0f;
   m_worldData.roundData.currentRoundNumber = 1;
   m_worldData.roundData.elapsedTime = 0.0f;
-  m_worldData.roundData.intermissionActivated = false;
+  m_worldData.roundData.intermissionActivated = true;
+  m_worldData.roundData.roundTime = 10.0f;
 
   info("-------------------------\n");
   info("final world data values are:\n");
@@ -91,7 +92,7 @@ void CrimsonlandFramework::initECS() {
 void CrimsonlandFramework::initPlants() {
 
   int maximalCount = 40;
-  for(int i = 0; i < 40; ++i) {
+  for(int i = 0; i < maximalCount; ++i) {
     int rnd = rand() % 100;
 
     char name[32];

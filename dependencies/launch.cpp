@@ -176,8 +176,8 @@ FRAMEWORK_API void drawText(const std::string& text,
   int tw, th, access;
   SDL_QueryTexture(textTexture, &format, &access, &tw, &th);
 
-  relX += int(float(tw) * anchorX);
-  relY += int(float(th) * anchorY);
+  relX -= int(float(tw) * anchorX);
+  relY -= int(float(th) * anchorY);
 
   SDL_Rect dest;
   dest.x = relX;
