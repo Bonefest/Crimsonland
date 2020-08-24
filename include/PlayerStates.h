@@ -4,7 +4,7 @@
 #include "StateBase.h"
 
 #include "ecs/System.h"
-#include "ecs/Components.h"
+#include "Components.h"
 
 
 class Player;

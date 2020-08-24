@@ -78,7 +78,7 @@ WorldData parseCommands(int argc, char** commands) {
       printf("%s\n", line);
       printf(" -map [Width]x[Height] - to set map size equal to Width times Height pixels\n");
       printf(" -window [Width]x[Height] - to set window size equal to Width times Height pixels\n"
-             "  (minimal width %d, minimal height %d)\n", MIN_SCREENW, MIN_SCREENH);
+             "  (minimal width %d, minimal height %d)\n", MIN_SCREENW * 3, MIN_SCREENH * 3);
       printf(" -num_enemies [num] - to set desired maximal number of enemies\n"
              "  (minimal %d maximal %d)\n", MIN_ENEMIES, MAX_ENEMIES);
       printf(" -num_plants [num] - to set desired maximal number of plants\n"
@@ -131,12 +131,14 @@ WorldData parseCommands(int argc, char** commands) {
 
       int width, height;
       parseSizeArgument(mapData, &width, &height);
-      if(width < result.windowWidth && height < result.windowHeight) {
+      if(width < result.windowWidth * 3 && height < result.windowHeight * 3) {
+
+        width = result.windowWidth * 3;
+        height = result.windowHeight * 3;
+
         info("%s map size is too small! Map size set to %dx%d.\n",
                 warning_header, result.windowWidth, result.windowHeight);
 
-        width = result.windowWidth;
-        height = result.windowHeight;
       }
 
       result.mapWidth = (real)width;

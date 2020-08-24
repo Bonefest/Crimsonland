@@ -38,7 +38,6 @@ bool CrimsonlandFramework::Init() {
     return false;
 
   }
-
   if(!m_bumpProgram.generateProgram("shaders/posteffect.vert",
                                     "shaders/bumpeffect.frag")) {
     info("%s\n", m_bumpProgram.getErrorMessage().c_str());
@@ -50,7 +49,6 @@ bool CrimsonlandFramework::Init() {
      !loadAnimations("data/trees/trees.json")) {
     return false;
   }
-
   showCursor(false);
 
   m_background = createSprite("sand");
@@ -82,14 +80,11 @@ bool CrimsonlandFramework::initECS() {
   m_registry = new Registry();
   m_context.registry = m_registry;
   m_context.data = m_worldData;
-
   if(!m_systemManager.addSystem(m_context, new LevelSystem(), "level_system")) return false;
-
   if(!m_systemManager.addSystem(m_context, new PhysicsIntegrationSystem(), "integration_system")) return false;
   if(!m_systemManager.addSystem(m_context, new PhysicsCollisionSystem(), "collision_system")) return false;
   if(!m_systemManager.addSystem(m_context, new PenetrationResolutionSystem(), "penetration_system")) return false;
   if(!m_systemManager.addSystem(m_context, new BulletSystem(), "bullet_system")) return false;
-
   if(!m_systemManager.addSystem(m_context, new FootprintGenerationSystem(), "footprints_system")) return false;
   if(!m_systemManager.addSystem(m_context, new TrailSystem(), "trail_system")) return false;
   if(!m_systemManager.addSystem(m_context, new EffectsSystem(), "effects_system")) return false;
@@ -99,7 +94,6 @@ bool CrimsonlandFramework::initECS() {
 
   m_uiSystem = new UIRenderingSystem();
   if(!m_uiSystem->init(m_context)) return false;
-
   return true;
 }
 
@@ -125,7 +119,6 @@ bool CrimsonlandFramework::initPlants() {
       m_trees.emplace_back(plantSprite, position);
     }
   }
-
   return true;
 }
 

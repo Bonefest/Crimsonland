@@ -1,13 +1,5 @@
-#include "ecs/Components.h"
+#include "Components.h"
 
-Component* componentFactory(ComponentID component) {
-  switch(component) {
-
-  default: break;
-  }
-
-  return nullptr;
-}
 
 Zombie::~Zombie() {
   if(stateController != nullptr) {

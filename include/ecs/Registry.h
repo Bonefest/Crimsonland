@@ -4,7 +4,7 @@
 
 #include "Common.h"
 #include "ecs/Bitset.h"
-#include "ecs/Components.h"
+#include "ecs/Component.h"
 
 #include <list>
 #include <array>
@@ -37,8 +37,10 @@ public:
   Entity createEntity(Bitset components = Bitset());
   void destroyEntity(Entity entity);
   bool isEntityExists(Entity entity) const;
+
   // NOTE(mizofix): creates new component, based on its id
   void addComponent(Entity entity, ComponentID component);
+
   // NOTE(mizofix): simply adds a new component, created somewhere
   // else
   void addComponent(Entity entity, Component* component);

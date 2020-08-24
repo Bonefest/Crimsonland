@@ -573,7 +573,8 @@ bool LevelSystem::init(ECSContext& context) {
   m_elapsedTimeFromLastZombieGeneration = 0.0f;
   m_elapsedTimeFromLastBoxGeneration = 0.0f;
 
-  for(int i = 0; i < rand() % 3 + 1; ++i) {
+  int initialBoxesCount = rand() % 3;
+  for(int i = 0; i < initialBoxesCount + 1; ++i) {
     generateWeaponBox(context, vec2());
   }
 
@@ -728,17 +729,13 @@ void LevelSystem::generateWeaponBox(ECSContext& context, const vec2& playerPos) 
   case WeaponType::SHOTGUN: boxSpriteName = "box_shotgun"; break;
   default: break;
   }
-
   Model* model = new Model();
   model->sprite = createSprite(boxSpriteName);
-
   Transformation* transf = new Transformation();
   transf->angle = randomReal(0.0f, 360.0f);
-
   real threshold = std::max(context.data.windowHeight, context.data.windowWidth) * 0.8f;
   transf->position = generateRandomPosition(playerPos, threshold, 2.0f * threshold,
                                             context.data.mapWidth, context.data.mapHeight);
-
   Physics* physics = new Physics();
   physics->size = 7.5f;
   physics->mass = 9999.0f;
@@ -746,7 +743,6 @@ void LevelSystem::generateWeaponBox(ECSContext& context, const vec2& playerPos) 
   WeaponBox* boxComponent = new WeaponBox();
   boxComponent->type = weaponType;
   boxComponent->clips = rand() % 3 + 2;
-
 
   registry->addComponent(weaponBox, model);
   registry->addComponent(weaponBox, transf);

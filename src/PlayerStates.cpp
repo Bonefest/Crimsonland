@@ -267,7 +267,6 @@ void PlayerAttack::onEnter(ECSContext& context, Entity player) {
 void PlayerAttack::update(ECSContext& context, Entity player, real deltaTime) {
 
   Model* model = context.registry->getComponent<Model>(player, ComponentID::Model);
-  Player* playerComponent = context.registry->getComponent<Player>(player, ComponentID::Player);
   Physics* physics = context.registry->getComponent<Physics>(player, ComponentID::Physics);
 
   updateAnimation(model->sprite, deltaTime);

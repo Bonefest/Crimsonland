@@ -443,7 +443,7 @@ FRAMEWORK_API int run(Framework* framework)
 		for(int modeIndex = 0; modeIndex < num_modes; ++modeIndex)
 		{
 			SDL_DisplayMode mode;
-            int index = SDL_GetDisplayMode(displayIndex, modeIndex, &mode);
+            SDL_GetDisplayMode(displayIndex, modeIndex, &mode);
 			if(mode.w == g_width && mode.h == g_height)
 			{
 				bModeFound = true;

@@ -1,5 +1,5 @@
-#ifndef COMPONENT_H_INCLUDED
-#define COMPONENT_H_INCLUDED
+#ifndef COMPONENTS_H_INCLUDED
+#define COMPONENTS_H_INCLUDED
 
 #include <vector>
 #include <list>
@@ -8,25 +8,7 @@
 #include "Common.h"
 #include "Framework.h"
 
-enum class ComponentID {
-  Model,
-  Transformation,
-  Physics,
-  Attributes,
-  Player,
-  Zombie,
-  Effect,
-  Bullet,
-  Trail,
-  Weapon,
-  Powerup,
-  COUNT
-};
-
-struct Component {
-  virtual ~Component() { }
-  virtual ComponentID getID() = 0;
-};
+#include "ecs/Component.h"
 
 struct Model: Component {
 
@@ -236,7 +218,5 @@ struct WeaponBox: Component {
 
 };
 
-
-Component* componentFactory(ComponentID component);
 
 #endif

@@ -6,7 +6,6 @@
 
 #include "Math.h"
 
-
 #ifndef NDEBUG
 #define info(...) fprintf(stderr, __VA_ARGS__)
 #else

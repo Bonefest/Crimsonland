@@ -7,10 +7,10 @@
 #include "json.hpp"
 
 #include "ecs/System.h"
-#include "ecs/Components.h"
+
+#include "Components.h"
 
 #include <list>
-
 
 // NOTE(mizofix): current trail system is frame rate dependent,
 // to prevent some bugs we should consider to lock frame rate

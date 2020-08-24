@@ -1,5 +1,6 @@
 #include "ZombieStates.h"
 #include "Message.h"
+#include "Components.h"
 
 void ZombieIdle::onEnter(ECSContext& context, Entity zombie) {
   Registry* registry = context.registry;
