@@ -33,6 +33,7 @@ void CrimsonlandFramework::PreInit(int& width, int& height, bool& fullscreen) {
 
 bool CrimsonlandFramework::Init() {
 
+  // TODO(mizofix): Get rid of GLAD
   if(!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
     return false;
 
@@ -60,12 +61,10 @@ bool CrimsonlandFramework::Init() {
     return false;
   }
 
-  initMainPart();
-
-  return true;
+  return initMainPart();
 }
 
-void CrimsonlandFramework::initMainPart() {
+bool CrimsonlandFramework::initMainPart() {
   registerMethod<CrimsonlandFramework>(int(MessageType::PLAYER_DEAD),
                                        &CrimsonlandFramework::onPlayerDead,
                                        this);
@@ -73,37 +72,40 @@ void CrimsonlandFramework::initMainPart() {
   m_playerDeadMessageProcessed = false;
 
 
-  initPlants();
-  initECS();
+  if(!initPlants() || !initECS()) return false;
+
+  return true;
 }
 
 
-void CrimsonlandFramework::initECS() {
+bool CrimsonlandFramework::initECS() {
   m_registry = new Registry();
   m_context.registry = m_registry;
   m_context.data = m_worldData;
 
-  m_systemManager.addSystem(m_context, new LevelSystem(), "level_system");
+  if(!m_systemManager.addSystem(m_context, new LevelSystem(), "level_system")) return false;
 
-  m_systemManager.addSystem(m_context, new PhysicsIntegrationSystem(), "integration_system");
-  m_systemManager.addSystem(m_context, new PhysicsCollisionSystem(), "collision_system");
-  m_systemManager.addSystem(m_context, new PenetrationResolutionSystem(), "penetration_system");
-  m_systemManager.addSystem(m_context, new BulletSystem(), "bullet_system");
+  if(!m_systemManager.addSystem(m_context, new PhysicsIntegrationSystem(), "integration_system")) return false;
+  if(!m_systemManager.addSystem(m_context, new PhysicsCollisionSystem(), "collision_system")) return false;
+  if(!m_systemManager.addSystem(m_context, new PenetrationResolutionSystem(), "penetration_system")) return false;
+  if(!m_systemManager.addSystem(m_context, new BulletSystem(), "bullet_system")) return false;
 
-  m_systemManager.addSystem(m_context, new FootprintGenerationSystem(), "footprints_system");
-  m_systemManager.addSystem(m_context, new TrailSystem(), "trail_system");
-  m_systemManager.addSystem(m_context, new EffectsSystem(), "effects_system");
-  m_systemManager.addSystem(m_context, new PlayerSystem(), "player_system");
-  m_systemManager.addSystem(m_context, new ZombieSystem(), "zombie_system");
-  m_systemManager.addSystem(m_context, new ModelRenderingSystem(), "model_rendering_system");
+  if(!m_systemManager.addSystem(m_context, new FootprintGenerationSystem(), "footprints_system")) return false;
+  if(!m_systemManager.addSystem(m_context, new TrailSystem(), "trail_system")) return false;
+  if(!m_systemManager.addSystem(m_context, new EffectsSystem(), "effects_system")) return false;
+  if(!m_systemManager.addSystem(m_context, new PlayerSystem(), "player_system")) return false;
+  if(!m_systemManager.addSystem(m_context, new ZombieSystem(), "zombie_system")) return false;
+  if(!m_systemManager.addSystem(m_context, new ModelRenderingSystem(), "model_rendering_system")) return false;
 
   m_uiSystem = new UIRenderingSystem();
-  m_uiSystem->init(m_context);
+  if(!m_uiSystem->init(m_context)) return false;
+
+  return true;
 }
 
-void CrimsonlandFramework::initPlants() {
+bool CrimsonlandFramework::initPlants() {
 
-  int maximalCount = 40;
+  int maximalCount = m_worldData.numPlants;
   for(int i = 0; i < maximalCount; ++i) {
     int rnd = rand() % 100;
 
@@ -124,6 +126,7 @@ void CrimsonlandFramework::initPlants() {
     }
   }
 
+  return true;
 }
 
 void CrimsonlandFramework::clearMainPart() {
@@ -147,7 +150,7 @@ void CrimsonlandFramework::clearPlants() {
   m_trees.clear();
 }
 
-void CrimsonlandFramework::restartGame() {
+bool CrimsonlandFramework::restartGame() {
   clearSubscribers();
   clearMainPart();
   m_worldData.roundData.intermissionActivated = true;
@@ -155,17 +158,19 @@ void CrimsonlandFramework::restartGame() {
   m_worldData.roundData.roundTime = 10.0f;
   m_worldData.roundData.currentRoundNumber = 1;
 
-  initMainPart();
+  return initMainPart();
 }
 
 bool CrimsonlandFramework::Tick() {
 
-  update();
-  draw();
-  drawToScreen();
-  updateTimer();
+  if(!m_done) {
+    update();
+    draw();
+    drawToScreen();
+    updateTimer();
+  }
 
-  return false;
+  return m_done;
 }
 
 void CrimsonlandFramework::onPlayerDead(Message message) {
@@ -209,7 +214,10 @@ void CrimsonlandFramework::update() {
     setCameraPosition(cameraPosX, cameraPosY);
 
     if(isKeyPressed(FRKey::ACTION)) {
-      restartGame();
+      if(!restartGame()) {
+        m_done = true;
+        return;
+      }
 
       m_playerDeadMessageReceived = false;
       m_playerDeadMessageProcessed = false;

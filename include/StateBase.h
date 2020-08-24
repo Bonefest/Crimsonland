@@ -4,7 +4,6 @@
 class StateController;
 
 #include "ecs/System.h"
-#include "StateController.h"
 
 class StateBase {
  public:

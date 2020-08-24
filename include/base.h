@@ -1,26 +1,21 @@
 #ifndef BASE_H_INCLUDED
 #define BASE_H_INCLUDED
 
-#include "SDL2/SDL.h"
 #include "Framework.h"
 #include "Program.h"
 #include "Common.h"
 #include "Assert.h"
 
-#include "ecs/Registry.h"
-#include "ecs/System.h"
-#include "ecs/SystemManager.h"
-
-#include <stdlib.h>
-#include <math.h>
-#include <stdint.h>
-#include <cstdio>
-#include <vector>
-
 #include "Math.h"
 #include "Message.h"
 
+#include "ecs/Registry.h"
+#include "ecs/SystemManager.h"
+
+#include "Systems.h"
+
 #include <array>
+#include <vector>
 #include <unordered_map>
 
 class CrimsonlandFramework : public Framework {
@@ -49,14 +44,14 @@ public:
 
 private:
 
-  void initMainPart();
-  void initECS();
-  void initPlants();
+  bool initMainPart();
+  bool initECS();
+  bool initPlants();
 
   void clearMainPart();
   void clearPlants();
 
-  void restartGame();
+  bool restartGame();
 
   void update();
   void draw();
@@ -69,6 +64,8 @@ private:
 
   void onPlayerDead(Message message);
   void processDeadMessage();
+
+  bool      m_done;
 
   WorldData m_worldData;
 

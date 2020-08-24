@@ -1,10 +1,14 @@
 #ifndef STATE_CONTROLLER_H_INCLUDED
 #define STATE_CONTROLLER_H_INCLUDED
 
+class StateBase;
+
 #include "StateBase.h"
 #include "Family.h"
 
-class StateBase;
+#include <unordered_map>
+
+//class StateBase;
 
 class StateController {
 public:

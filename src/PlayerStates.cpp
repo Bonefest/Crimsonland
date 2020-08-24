@@ -1,6 +1,7 @@
 
 #include "PlayerStates.h"
 #include "Framework.h"
+#include "Message.h"
 
 void PlayerIdle::onEnter(ECSContext& context, Entity player) {
   Model* model = context.registry->getComponent<Model>(player, ComponentID::Model);

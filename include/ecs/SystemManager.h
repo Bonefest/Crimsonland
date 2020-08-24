@@ -14,10 +14,16 @@ public:
     clear();
   }
 
-  void addSystem(ECSContext& context, System* system, const std::string& name) {
+  bool addSystem(ECSContext& context, System* system, const std::string& name) {
+    if(!system->init(context)) {
+      delete system;
+      return false;
+    }
+
     Assert(m_systemPairs.emplace(name, system).second);
     m_systems.push_back(system);
-    system->init(context);
+
+    return true;
   }
 
   void removeSystem(const std::string& name) {
