@@ -1,0 +1,82 @@
+{
+    "weapons": {
+        "knife": {
+            "type": 0,
+            "melee_damage": 25.0,
+            "melee_radius": 60.0
+        },
+        "pistol": {
+            "type": 1,
+            "melee_damage": 5.0,
+            "melee_radius": 30.0,
+            "damage": 35.0,
+            "offset": {"x" : 13, "y": 11},
+
+            "init_clips": 2,
+            "clip_size": 20,
+            "init_ammo": 20,
+
+            "bulletSize": 2,
+            "durability": 100,
+            "lifetime": 3.0,
+            "speed": 400.0,
+
+            "trail_lifetime": 0.5,
+            "trail_max_angle": 0.0,
+            "trail_scatter_speed": 0.0,
+
+            "sprite_name": "pistol_bullet"
+
+        },
+
+        "shotgun": {
+            "type": 2,
+            "melee_damage": 10.0,
+            "melee_radius": 45.0,
+            "damage": 50.0,
+            "offset": {"x" : 15, "y": 10},
+
+            "init_clips": 0,
+            "clip_size": 8,
+            "init_ammo": 0,
+
+            "bulletSize": 3,
+            "durability": 200,
+            "lifetime": 1.0,
+            "speed": 500.0,
+
+            "trail_lifetime": 0.125,
+            "trail_max_angle": 90.0,
+            "trail_scatter_speed": 15.0,
+
+            "sprite_name": "shotgun_bullet"
+
+        },
+
+        "rifle": {
+            "type": 3,
+            "melee_damage": 10.0,
+            "melee_radius": 50.0,
+            "damage": 20.0,
+            "offset": {"x" : 18, "y": 9},
+
+            "init_clips": 0,
+            "clip_size": 45,
+            "init_ammo": 0,
+
+            "bulletSize": 2,
+            "durability": 2000,
+            "lifetime": 3.0,
+            "speed": 600.0,
+
+            "trail_lifetime": 2.0,
+            "trail_max_angle": 120.0,
+            "trail_scatter_speed": 10.0,
+
+            "sprite_name": "rifle_bullet"
+
+        }
+
+    }
+
+}

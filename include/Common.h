@@ -41,6 +41,8 @@ struct WorldData {
 
   RoundData roundData;
 
+  uint32_t zombieCounter;
+
 };
 
 enum class WeaponType {

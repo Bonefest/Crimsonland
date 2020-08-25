@@ -1,0 +1,87 @@
+{
+	"animations": {
+
+        "zombie_idle": {
+            "texture": "data/zombies/idle.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 1792, "y": 768},
+            "size": {"w": 256, "h": 256},
+            "row_width": 2048,
+            "duration": 0.033,
+            "scale": 0.9,
+            "repeat": true
+        },
+        "zombie_walk1": {
+            "texture": "data/zombies/walk.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 1792, "y": 768},
+            "size": {"w": 256, "h": 256},
+            "row_width": 2048,
+            "duration": 0.033,
+            "scale": 0.9,
+            "repeat": true
+        },
+        "zombie_walk2": {
+            "texture": "data/zombies/walk2.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 1792, "y": 768},
+            "size": {"w": 256, "h": 256},
+            "row_width": 2048,
+            "duration": 0.033,
+            "scale": 0.9,
+            "repeat": true
+        },
+
+
+        "zombie_attack1": {
+            "texture": "data/zombies/attack1.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 768, "y": 1024},
+            "size": {"w": 256, "h": 256},
+            "duration": 0.1,
+            "scale": 0.9,
+            "repeat": false
+        },
+        "zombie_attack2": {
+            "texture": "data/zombies/attack2.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 768, "y": 1024},
+            "size": {"w": 256, "h": 256},
+            "duration": 0.1,
+            "scale": 0.9,
+            "repeat": false
+        },
+        "zombie_attack3": {
+            "texture": "data/zombies/attack3.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 768, "y": 1024},
+            "size": {"w": 256, "h": 256},
+            "duration": 0.166,
+            "scale": 0.9,
+            "repeat": false
+        },
+
+
+        "zombie_death1": {
+            "texture": "data/zombies/death1.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 0, "y": 1024},
+            "size": {"w": 256, "h": 256},
+            "row_width": 1024,
+            "duration": 0.10,
+            "scale": 0.75,
+            "repeat": false
+        },
+        "zombie_death2": {
+            "texture": "data/zombies/death2.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 0, "y": 1024},
+            "size": {"w": 256, "h": 256},
+            "row_width": 1024,
+            "duration": 0.10,
+            "scale": 0.75,
+            "repeat": false
+        }
+
+    }
+}

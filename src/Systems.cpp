@@ -472,6 +472,8 @@ void ZombieSystem::update(ECSContext& context, real deltaTime) {
                      zombieTransform->position,
                      zombieTransform->scale, zombieTransform->angle, remainingTime,
                      true);
+
+      context.data.zombieCounter++;
       continue;
     }
 
@@ -1185,6 +1187,10 @@ void UIRenderingSystem::draw(ECSContext& context) {
   Transformation* playerTransform = registry->getComponent<Transformation>(player, ComponentID::Transformation);
 
   if(playerAttributes->isDead) {
+    char textBuffer[64];
+    sprintf(textBuffer, "You've killed %u zombies!", context.data.zombieCounter);
+    drawText(textBuffer, int(context.data.windowWidth * 0.5f), 10.0f, 0.5f, 0.0f, 0, 0, 0, false);
+
     drawText("You lose! Press [R] to restart",
              int(context.data.windowWidth * 0.5f), int(context.data.windowHeight * 0.5f),
              0.5f, 0.5f, 0, 0, 0, false);

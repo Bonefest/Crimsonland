@@ -1,0 +1,370 @@
+{
+	"animations": {
+        "knife_idle": {
+            "texture": "data/player/knife/idle.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 1316, "y": 900},
+            "size": {"w": 329, "h": 300},
+            "row_width": 1645,
+            "duration": 0.066,
+            "scale": 0.2,
+            "repeat": true
+        },
+		"knife_move": {
+            "texture": "data/player/knife/move.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 1674, "y": 438},
+            "size": {"w": 279, "h": 219},
+            "row_width": 1953,
+            "duration": 0.066,
+            "scale": 0.2,
+            "repeat": true
+		},
+		"knife_attack": {
+            "texture": "data/player/knife/attack.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 658, "y": 1200},
+            "size": {"w": 329, "h": 300},
+            "row_width": 987,
+            "duration": 0.066,
+            "scale": 0.2,
+            "repeat": false
+		},
+
+
+
+        "pistol_idle": {
+            "texture": "data/player/handgun/idle.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 759, "y": 864},
+            "size": {"w": 253, "h": 216},
+            "row_width": 1012,
+            "duration": 0.066,
+            "scale": 0.2,
+            "repeat": true
+		},
+        "pistol_move": {
+            "texture": "data/player/handgun/move.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 1548, "y": 440},
+            "size": {"w": 258, "h": 220},
+            "row_width": 1806,
+            "duration": 0.033,
+            "scale": 0.2,
+            "repeat": true
+		},
+        "pistol_shoot": {
+            "texture": "data/player/handgun/shoot.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 510, "y": 0},
+            "size": {"w": 255, "h": 215},
+            "row_width": 765,
+            "duration": 0.132,
+            "scale": 0.2,
+            "repeat": false
+		},
+        "pistol_attack": {
+            "texture": "data/player/handgun/attack.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 582, "y": 1024},
+            "size": {"w": 291, "h": 256},
+            "row_width": 873,
+            "duration": 0.066,
+            "scale": 0.2,
+            "repeat": false
+		},
+        "pistol_reload": {
+            "texture": "data/player/handgun/reload.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 520, "y": 920},
+            "size": {"w": 260, "h": 230},
+            "row_width": 780,
+            "duration": 0.132,
+            "scale": 0.2,
+            "repeat": false
+		},
+
+
+        "shotgun_idle": {
+            "texture": "data/player/shotgun/idle.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 313, "y": 1242},
+            "size": {"w": 313, "h": 207},
+            "row_width": 939,
+            "duration": 0.066,
+            "scale": 0.2,
+            "repeat": true
+		},
+        "shotgun_move": {
+            "texture": "data/player/shotgun/move.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 313, "y": 1236},
+            "size": {"w": 313, "h": 206},
+            "row_width": 939,
+            "duration": 0.066,
+            "scale": 0.2,
+            "repeat": true
+		},
+        "shotgun_shoot": {
+            "texture": "data/player/shotgun/shoot.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 624, "y": 0},
+            "size": {"w": 312, "h": 206},
+            "row_width": 936,
+            "duration": 0.264,
+            "scale": 0.2,
+            "repeat": false
+		},
+        "shotgun_attack": {
+            "texture": "data/player/shotgun/attack.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 1432, "y": 706},
+            "size": {"w": 358, "h": 353},
+            "row_width": 1790,
+            "duration": 0.066,
+            "scale": 0.2,
+            "repeat": false
+		},
+        "shotgun_reload": {
+            "texture": "data/player/shotgun/reload.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 322, "y": 1302},
+            "size": {"w": 322, "h": 217},
+            "row_width": 966,
+            "duration": 0.132,
+            "scale": 0.2,
+            "repeat": false
+		},
+
+
+
+        "rifle_idle": {
+            "texture": "data/player/rifle/idle.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 313, "y": 1242},
+            "size": {"w": 313, "h": 207},
+            "row_width": 939,
+            "duration": 0.066,
+            "scale": 0.2,
+            "repeat": true
+		},
+        "rifle_move": {
+            "texture": "data/player/rifle/move.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 313, "y": 1236},
+            "size": {"w": 313, "h": 206},
+            "row_width": 939,
+            "duration": 0.066,
+            "scale": 0.2,
+            "repeat": true
+		},
+        "rifle_shoot": {
+            "texture": "data/player/rifle/shoot.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 624, "y": 0},
+            "size": {"w": 312, "h": 206},
+            "row_width": 936,
+            "duration": 0.066,
+            "scale": 0.2,
+            "repeat": false
+		},
+        "rifle_attack": {
+            "texture": "data/player/rifle/attack.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 1432, "y": 706},
+            "size": {"w": 358, "h": 353},
+            "row_width": 1790,
+            "duration": 0.066,
+            "scale": 0.2,
+            "repeat": false
+		},
+        "rifle_reload": {
+            "texture": "data/player/rifle/reload.png",
+            "start_frame": {"x": 0,  "y": 0},
+            "end_frame": {"x": 322, "y": 1302},
+            "size": {"w": 322, "h": 217},
+            "row_width": 966,
+            "duration": 0.132,
+            "scale": 0.2,
+            "repeat": false
+		},
+
+        "blood_1": {
+            "texture": "data/blood1.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 768, "y": 384},
+            "size": {"w": 192, "h": 192},
+            "row_width": 960,
+            "scale": 0.2,
+            "duration": 0.0132,
+            "repeat": false
+        },
+        "blood_2": {
+            "texture": "data/blood2.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 384, "y": 192},
+            "size": {"w": 192, "h": 192},
+            "row_width": 960,
+            "scale": 0.2,
+            "duration": 0.0132,
+            "repeat": false
+        },
+
+
+
+        "footprint": {
+            "texture": "data/footprint_blured2.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 0, "y": 0},
+            "size": {"w": 26, "h": 24},
+            "duration": 0.0,
+            "repeat": true
+        },
+
+        "bloodprint_1": {
+            "texture": "data/bloodprint1.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 0, "y": 0},
+            "size": {"w": 48, "h": 24},
+            "duration": 0.0,
+            "repeat": true
+        },
+
+        "bloodprint_2": {
+            "texture": "data/bloodprint3.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 0, "y": 0},
+            "size": {"w": 48, "h": 24},
+            "duration": 0.0,
+            "repeat": true
+        },
+
+        "gun_explosion": {
+            "texture": "data/gun_explosion.png",
+            "start_frame": {"x" : 0, "y": 0},
+            "end_frame": {"x": 128, "y": 128},
+            "size": {"w": 64, "h": 64},
+            "row_width": 192,
+            "duration": 0.066,
+            "scale": 0.35,
+            "repeat": false
+        },
+
+        "sand": {
+            "texture": "data/sand.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 0, "y": 0},
+            "size": {"w": 1000, "h": 1000},
+            "duration": 0.0,
+            "repeat": false
+        },
+
+        "box_pistol": {
+            "texture": "data/box_pistol.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 0, "y": 0},
+            "size": {"w": 512, "h": 512},
+            "scale": 0.05,
+            "duration": 0.0,
+            "repeat": false
+        },
+        "box_rifle": {
+            "texture": "data/box_rifle.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 0, "y": 0},
+            "size": {"w": 512, "h": 512},
+            "scale": 0.05,
+            "duration": 0.0,
+            "repeat": false
+        },
+        "box_shotgun": {
+            "texture": "data/box_shotgun.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 0, "y": 0},
+            "size": {"w": 512, "h": 512},
+            "scale": 0.05,
+            "duration": 0.0,
+            "repeat": false
+        },
+
+        "ui_pistol": {
+            "texture": "data/ui/pistol.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x" : 0, "y": 0},
+            "size": {"w": 256, "h": 256},
+            "duration": 0.0,
+            "repeat": false
+        },
+        "ui_rifle": {
+            "texture": "data/ui/rifle.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x" : 0, "y": 0},
+            "size": {"w": 279, "h": 256},
+            "duration": 0.0,
+            "repeat": false
+        },
+        "ui_knife": {
+            "texture": "data/ui/knife.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x" : 0, "y": 0},
+            "size": {"w": 278, "h": 256},
+            "duration": 0.0,
+            "repeat": false
+        },
+        "ui_shotgun": {
+            "texture": "data/ui/shotgun.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x" : 0, "y": 0},
+            "size": {"w": 276, "h": 256},
+            "duration": 0.0,
+            "repeat": false
+        },
+
+        "ui_radar": {
+            "texture": "data/ui/radar.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x" : 0, "y": 0},
+            "size": {"w": 711, "h": 720},
+            "duration": 0.0,
+            "repeat": false
+        },
+
+        "ui_arrow": {
+            "texture": "data/ui/arrow2.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 0, "y": 0},
+            "size": {"w": 19, "h": 19},
+            "duration": 0.0,
+            "repeat": false
+        },
+
+        "ui_xicon": {
+            "texture": "data/ui/xicon.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 0, "y": 0},
+            "size": {"w": 24, "h": 24},
+            "duration": 0.0,
+            "repeat": false
+        },
+
+        "ui_circle": {
+            "texture": "data/ui/circle_icon.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 0, "y": 0},
+            "size": {"w": 24, "h": 24},
+            "scale": 0.75,
+            "duration": 0.0,
+            "repeat": false
+        },
+
+        "ui_reticle": {
+            "texture": "data/ui/reticle.png",
+            "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 0, "y": 0},
+            "size": {"w": 128, "h": 128},
+            "scale": 0.125,
+            "duration": 0.0,
+            "repeat": false
+        }
+	}
+}

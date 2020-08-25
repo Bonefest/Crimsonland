@@ -1,0 +1,426 @@
+{
+    "animations": {
+
+	    "tree_1": {
+            "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 68, "y": 405},
+            "end_frame": {"x": 68, "y": 405},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":68,"h":68}
+        },
+
+	    "tree_2": {
+            "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 112, "y": 0},
+            "end_frame": {"x": 112, "y": 0},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":44,"h":42}
+        },
+
+	    "tree_3": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 473},
+            "end_frame": {"x": 0, "y": 473},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":68,"h":68}
+        },
+
+	    "tree_4": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 136, "y": 405},
+            "end_frame": {"x": 136, "y": 405},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":68,"h":68}
+        },
+
+	    "tree_5": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 52, "y": 98},
+            "end_frame": {"x": 52, "y": 98},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":54,"h":54}
+        },
+
+	    "tree_6": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 46, "y": 48},
+            "end_frame": {"x": 46, "y": 48},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":46,"h":48}
+        },
+
+	    "tree_7": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 120, "y": 154},
+            "end_frame": {"x": 120, "y": 154},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":56,"h":58}
+        },
+
+	    "tree_8": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 189, "y": 46},
+            "end_frame": {"x": 189, "y": 46},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":50,"h":52}
+        },
+	    "tree_9": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 32, "y": 0},
+            "end_frame": {"x": 32, "y": 0},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":40,"h":40}
+        },
+
+	    "tree_10": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 66, "y": 339},
+            "end_frame": {"x": 66, "y": 339},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":66,"h":66}
+        },
+
+	    "tree_11": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 142, "y": 46},
+            "end_frame": {"x": 142, "y": 46},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":47,"h":52}
+        },
+
+	    "tree_12": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 46},
+            "end_frame": {"x": 0, "y": 46},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":46,"h":48}
+        },
+
+	    "tree_13": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 0},
+            "end_frame": {"x": 0, "y": 0},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":32,"h":32}
+        },
+
+	    "tree_14": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 156, "y": 0},
+            "end_frame": {"x": 156, "y": 0},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":46,"h":44}
+        },
+	    "tree_15": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 339},
+            "end_frame": {"x": 0, "y": 339},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":66,"h":66}
+        },
+
+	    "tree_16": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 202, "y": 0},
+            "end_frame": {"x": 202, "y": 0},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":48,"h":46}
+        },
+
+	    "tree_17": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 176, "y": 154},
+            "end_frame": {"x": 176, "y": 154},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":54,"h":58}
+        },
+
+	    "tree_18": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 60, "y": 274},
+            "end_frame": {"x": 60, "y": 274},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":70,"h":64}
+        },
+
+	    "tree_19": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 118, "y": 212},
+            "end_frame": {"x": 118, "y": 212},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":56,"h":60}
+        },
+
+	    "tree_20": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 106, "y": 98},
+            "end_frame": {"x": 106, "y": 98},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":52,"h":54}
+        },
+
+	    "tree_21": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 54, "y": 212},
+            "end_frame": {"x": 54, "y": 212},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":64,"h":60}
+        },
+
+	    "tree_22": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 212},
+            "end_frame": {"x": 0, "y": 212},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":54,"h":60}
+        },
+
+	    "tree_23": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 68, "y": 473},
+            "end_frame": {"x": 68, "y": 473},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":64,"h":68}
+        },
+
+	    "tree_24": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 72, "y": 0},
+            "end_frame": {"x": 72, "y": 0},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":40,"h":42}
+        },
+
+	    "tree_25": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 274},
+            "end_frame": {"x": 0, "y": 274},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":60,"h":62}
+        },
+
+	    "tree_26": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 92, "y": 46},
+            "end_frame": {"x": 92, "y": 46},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":50,"h":50}
+        },
+
+	    "tree_27": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 174, "y": 212},
+            "end_frame": {"x": 174, "y": 212},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":60,"h":62}
+        },
+
+	    "tree_28": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 132, "y": 473},
+            "end_frame": {"x": 132, "y": 473},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":70,"h":70}
+        },
+
+	    "tree_29": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 98},
+            "end_frame": {"x": 0, "y": 98},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":52,"h":52}
+        },
+
+	    "tree_30": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 132, "y": 339},
+            "end_frame": {"x": 132, "y": 339},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":66,"h":66}
+        },
+
+	    "tree_31": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 106, "y": 903},
+            "end_frame": {"x": 106, "y": 903},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":110,"h":120}
+        },
+
+	    "tree_32": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 903},
+            "end_frame": {"x": 0, "y": 903},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":106,"h":120}
+        },
+
+	    "tree_33": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 130, "y": 274},
+            "end_frame": {"x": 130, "y": 274},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":67,"h":65}
+        },
+
+	    "tree_34": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 70, "y": 543},
+            "end_frame": {"x": 70, "y": 543},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":82,"h":76}
+        },
+
+	    "tree_35": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 152, "y": 543},
+            "end_frame": {"x": 152, "y": 543},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":78,"h":76}
+        },
+
+	    "tree_36": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 162, "y": 619},
+            "end_frame": {"x": 162, "y": 619},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":84,"h":82}
+        },
+
+	    "tree_37": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 94, "y": 791},
+            "end_frame": {"x": 94, "y": 791},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":110,"h":112}
+        },
+
+	    "tree_38": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 701},
+            "end_frame": {"x": 0, "y": 701},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":76,"h":90}
+        },
+
+	    "tree_39": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 158, "y": 98},
+            "end_frame": {"x": 158, "y": 98},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":60,"h":56}
+        },
+
+	    "tree_40": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 154},
+            "end_frame": {"x": 0, "y": 154},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":60,"h":56}
+        },
+
+	    "tree_41": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 60, "y": 154},
+            "end_frame": {"x": 60, "y": 154},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":60,"h":56}
+        },
+
+	    "tree_42": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 543},
+            "end_frame": {"x": 0, "y": 543},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":70,"h":76}
+        },
+
+	    "tree_43": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 619},
+            "end_frame": {"x": 0, "y": 619},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":86,"h":78}
+        },
+
+	    "tree_44": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 405},
+            "end_frame": {"x": 0, "y": 405},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":68,"h":68}
+        },
+
+	    "tree_45": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 0, "y": 791},
+            "end_frame": {"x": 0, "y": 791},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":94,"h":98}
+        },
+
+	    "tree_46": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 76, "y": 701},
+            "end_frame": {"x": 76, "y": 701},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":94,"h":90}
+        },
+
+	    "tree_47": {
+	        "texture": "data/trees/trees.png",
+	        "start_frame": {"x": 86, "y": 619},
+            "end_frame": {"x": 86, "y": 619},
+	        "duration": 0.0,
+	        "repeat": false,
+	        "size": {"w":76,"h":82}
+        }
+
+    }
+}

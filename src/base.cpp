@@ -72,6 +72,8 @@ bool CrimsonlandFramework::initMainPart() {
 
   if(!initPlants() || !initECS()) return false;
 
+  m_worldData.zombieCounter = 0;
+
   return true;
 }
 
